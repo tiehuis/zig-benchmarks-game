@@ -1,0 +1,13 @@
+const Builder = @import("std").build.Builder;
+
+pub fn build(b: &Builder) {
+    const mode = b.standardReleaseOptions();
+    const exe = b.addExecutable("binary-trees", "binary-trees.zig");
+    exe.setBuildMode(mode);
+    exe.setOutputPath("./binary-trees");
+
+    exe.linkSystemLibrary("c");
+
+    b.default_step.dependOn(&exe.step);
+    b.installArtifact(exe);
+}
