@@ -4,7 +4,6 @@ pub fn build(b: &Builder) {
     const mode = b.standardReleaseOptions();
     const exe = b.addExecutable("pidigits", "pidigits.zig");
     exe.setBuildMode(mode);
-    exe.setOutputPath("./pidigits");
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gmp");

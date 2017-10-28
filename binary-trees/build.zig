@@ -4,7 +4,6 @@ pub fn build(b: &Builder) {
     const mode = b.standardReleaseOptions();
     const exe = b.addExecutable("binary-trees", "binary-trees.zig");
     exe.setBuildMode(mode);
-    exe.setOutputPath("./binary-trees");
 
     exe.linkSystemLibrary("c");
 
