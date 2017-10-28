@@ -1,0 +1,5 @@
+C benchmark solutions.
+
+We take the fastest single-threaded C solution from the site where available
+for our reference. These are intended as a relative reference to any local zig
+solutions provided.
