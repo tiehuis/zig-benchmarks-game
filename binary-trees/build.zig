@@ -5,8 +5,6 @@ pub fn build(b: &Builder) {
     const exe = b.addExecutable("binary-trees", "binary-trees.arena.zig");
     exe.setBuildMode(mode);
 
-    exe.linkSystemLibrary("c");
-
     b.default_step.dependOn(&exe.step);
     b.installArtifact(exe);
 }
