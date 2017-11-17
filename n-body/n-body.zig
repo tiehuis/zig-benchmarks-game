@@ -138,12 +138,16 @@ fn offset_momentum(bodies: []Planet) {
 }
 
 pub fn main() -> %void {
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
+
     const n = 50000000;
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    _ = std.io.stdout.printf("{}\n", energy(bodies[0..]));
+    _ = stdout.print("{}\n", energy(bodies[0..]));
 
     advance(bodies[0..], 0.01, n);
-    _ = std.io.stdout.printf("{}\n", energy(bodies[0..]));
+    _ = stdout.print("{}\n", energy(bodies[0..]));
 }

@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const IncrementingAllocator = std.mem.IncrementingAllocator;
+const IncrementingAllocator = std.heap.IncrementingAllocator;
 const printf = std.io.stdout.printf;
 
 const TreeNode = struct {
@@ -38,18 +38,23 @@ fn bottomUpTree(a: &Allocator, depth: usize) -> &TreeNode {
 }
 
 pub fn main() -> %void {
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
+
     const n = 21;
 
     const min_depth: usize = 4;
     const max_depth: usize = n;
     const stretch_depth = max_depth + 1;
 
+    // NOTE: Can we have a variant which grows on demand when needed without up front specification?
     var inc_allocator = %%IncrementingAllocator.init(128 * 1024 * 1024);
     defer inc_allocator.deinit();
     var allocator = &inc_allocator.allocator;
 
     const stretch_tree = bottomUpTree(allocator, stretch_depth);
-    _ = printf("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
+    _ = stdout.print("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
     inc_allocator.reset();
 
     const long_lived_tree = bottomUpTree(allocator, max_depth);
@@ -67,8 +72,8 @@ pub fn main() -> %void {
             inc_allocator.end_index = marker;
         }
 
-        _ = printf("{} trees of depth {}, check {}\n", iterations, depth, check);
+        _ = stdout.print("{} trees of depth {}, check {}\n", iterations, depth, check);
     }
 
-    _ = printf("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
+    _ = stdout.print("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
 }

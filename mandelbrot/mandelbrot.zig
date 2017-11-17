@@ -1,14 +1,17 @@
 const std = @import("std");
-const printf = std.io.stdout.printf;
 const Float = f32;
 
 pub fn main() -> %void {
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
+
     const w: usize = 16000;
     const h = w;
     const iterations = 50;
     const limit = 2.0;
 
-    _ = printf("P4\n{} {}\n", w, h);
+    _ = stdout.print("P4\n{} {}\n", w, h);
 
     var ba: u8 = 0;
     var bn: u8 = 0;
@@ -39,12 +42,12 @@ pub fn main() -> %void {
 
             bn += 1;
             if (bn == 8) {
-                _ = printf("{c}", ba);
+                _ = stdout.print("{c}", ba);
                 ba = 0;
                 bn = 0;
             } else if (x == w - 1) {
                 ba = std.math.shr(u8, ba, 8 - w % 8);
-                _ = printf("{c}", ba);
+                _ = stdout.print("{c}", ba);
                 ba = 0;
                 bn = 0;
             }

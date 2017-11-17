@@ -1,7 +1,7 @@
 // TODO: Fixup generation issue on final probability example. Printing less than expected.
 
 const std = @import("std");
-const io = std.io;
+const OutStream = std.io.OutStream;
 
 const max_line_length = 60;
 
@@ -19,7 +19,7 @@ const AminoAcid = struct {
     p: f64,
 };
 
-fn repeatAndWrap(comptime sequence: []const u8, count: usize) {
+fn repeatAndWrap(out: &OutStream, comptime sequence: []const u8, count: usize) {
     var padded_sequence: [sequence.len + max_line_length]u8 = undefined;
     for (padded_sequence) |*e, i| {
         *e = sequence[i % sequence.len];
@@ -31,8 +31,8 @@ fn repeatAndWrap(comptime sequence: []const u8, count: usize) {
         const rem = count - idx;
         const line_length = std.math.min(usize(max_line_length), rem);
 
-        _ = io.stdout.write(padded_sequence[off .. off + line_length]);
-        _ = io.stdout.writeByte('\n');
+        _ = out.write(padded_sequence[off .. off + line_length]);
+        _ = out.writeByte('\n');
 
         off += line_length;
         if (off > sequence.len) {
@@ -42,7 +42,7 @@ fn repeatAndWrap(comptime sequence: []const u8, count: usize) {
     }
 }
 
-fn generateAndWrap(comptime nucleotides: []const AminoAcid, count: usize) {
+fn generateAndWrap(out: &OutStream, comptime nucleotides: []const AminoAcid, count: usize) {
     var cum_prob: f64 = 0;
     var cum_prob_total: [nucleotides.len]f64 = undefined;
     for (nucleotides) |n, i| {
@@ -72,12 +72,16 @@ fn generateAndWrap(comptime nucleotides: []const AminoAcid, count: usize) {
         }
 
         line[line_length] = '\n';
-        _ = io.stdout.write(line[0 .. line_length + 1]);
+        _ = out.write(line[0 .. line_length + 1]);
         idx += line_length;
     }
 }
 
 pub fn main() -> %void {
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
+
     const n = 25000000;
 
     const homo_sapiens_alu =
@@ -85,8 +89,8 @@ pub fn main() -> %void {
         "AGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCG" ++
         "TGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGG" ++
         "AGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
-    _ = io.stdout.write(">ONE Homo sapiens alu\n");
-    repeatAndWrap(homo_sapiens_alu, 2 * n);
+    _ = stdout.write(">ONE Homo sapiens alu\n");
+    repeatAndWrap(stdout, homo_sapiens_alu, 2 * n);
 
 
     const iub_nucleotide_info = []const AminoAcid {
@@ -106,8 +110,8 @@ pub fn main() -> %void {
         AminoAcid { .l = 'W', .p = 0.02 },
         AminoAcid { .l = 'Y', .p = 0.02 },
     };
-    _ = io.stdout.write(">TWO IUB ambiguity codes\n");
-    generateAndWrap(iub_nucleotide_info, 3 * n);
+    _ = stdout.write(">TWO IUB ambiguity codes\n");
+    generateAndWrap(stdout, iub_nucleotide_info, 3 * n);
 
 
     const homo_sapien_nucleotide_info = []const AminoAcid {
@@ -116,6 +120,6 @@ pub fn main() -> %void {
         AminoAcid { .l = 'g', .p = 0.1975473066391 },
         AminoAcid { .l = 't', .p = 0.3015094502008 },
     };
-    _ = io.stdout.write(">THREE Homo sapiens frequency\n");
-    generateAndWrap(homo_sapien_nucleotide_info, 5 * n);
+    _ = stdout.write(">THREE Homo sapiens frequency\n");
+    generateAndWrap(stdout, homo_sapien_nucleotide_info, 5 * n);
 }

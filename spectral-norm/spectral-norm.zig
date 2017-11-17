@@ -35,6 +35,10 @@ fn eval_ata_times_u(atau: []Float, u: []const Float) {
 }
 
 pub fn main() -> %void {
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
+
     var u: [n]Float = undefined;
     var v: [n]Float = undefined;
 
@@ -57,5 +61,5 @@ pub fn main() -> %void {
         vv += v[i] * v[i];
     }
 
-    _ = std.io.stdout.printf("{}\n", std.math.sqrt(vbv / vv));
+    _ = stdout.print("{}\n", std.math.sqrt(vbv / vv));
 }

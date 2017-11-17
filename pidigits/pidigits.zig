@@ -1,5 +1,6 @@
 // Resolve C translation compile error.
 
+const std = @import("std");
 const c = @cImport(@cInclude("gmp.h"));
 
 const PiDigitsIterator = struct {
@@ -87,16 +88,18 @@ const digits_n = 50;
 const line_length = 10;
 
 pub fn main() -> %void {
-    var stdout = @import("std").io.stdout;
+    var stdout_file = %return std.io.getStdOut();
+    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    const stdout = &stdout_out_stream.stream;
 
     var pi = PiDigitsIterator.init(digits_n);
     defer pi.deinit();
 
     var i: usize = 1;
     while (pi.next()) |digit| {
-        _ = stdout.printf("{}", '0' + digit);
+        _ = stdout.print("{}", '0' + digit);
         if (i % line_length == 0) {
-            _ = stdout.printf("\t:{}\n", i);
+            _ = stdout.print("\t:{}\n", i);
         }
         i += 1;
     }
