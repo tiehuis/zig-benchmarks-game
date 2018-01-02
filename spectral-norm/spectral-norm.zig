@@ -6,7 +6,7 @@ const Float = f32;
 const n = 5500;
 
 fn eval_a(i: usize, j: usize) -> Float {
-    1.0 / Float((i + j) * (i + j + 1) / 2 + i + 1)
+    return 1.0 / Float((i + j) * (i + j + 1) / 2 + i + 1);
 }
 
 fn eval_a_times_u(comptime transpose: bool, au: []Float, u: []const Float) {

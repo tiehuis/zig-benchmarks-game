@@ -117,7 +117,7 @@ fn energy(bodies: []const Planet) -> f64 {
         }
     }
 
-    e
+    return e;
 }
 
 fn offset_momentum(bodies: []Planet) {

@@ -26,7 +26,7 @@ const PiDigitsIterator = struct {
         c.mpz_init_set_ui(&it.dn[0], 1);
         c.mpz_init_set_ui(&it.nm[0], 1);
 
-        it
+        return it;
     }
 
     pub fn deinit(self: &Self) {
@@ -57,7 +57,7 @@ const PiDigitsIterator = struct {
             return usize(d);
         }
 
-        null
+        return null;
     }
 
     fn nextTerm(self: &Self, k: usize) {
@@ -74,7 +74,7 @@ const PiDigitsIterator = struct {
         c.mpz_add(&self.t2[0], &self.t1[0], &self.ac[0]);
         c.mpz_tdiv_q(&self.t1[0], &self.t2[0], &self.dn[0]);
 
-        c.mpz_get_ui(&self.t1[0])
+        return c.mpz_get_ui(&self.t1[0]);
     }
 
     fn eliminateDigit(self: &Self, d: usize) {

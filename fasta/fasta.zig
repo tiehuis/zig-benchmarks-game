@@ -11,7 +11,7 @@ const ic = 29573;
 var seed: u32 = 42;
 fn nextRandom(max: f64) -> f64 {
     seed = (seed * ia + ic) % im;
-    max * f64(seed) / f64(im)
+    return max * f64(seed) / f64(im);
 }
 
 const AminoAcid = struct {

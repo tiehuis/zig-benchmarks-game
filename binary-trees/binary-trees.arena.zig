@@ -12,7 +12,7 @@ const TreeNode = struct {
         node.l = l;
         node.r = r;
 
-        node
+        return node;
     }
 
     pub fn free(self: &TreeNode, a: &Allocator) {
@@ -23,17 +23,17 @@ const TreeNode = struct {
 fn itemCheck(node: &TreeNode) -> usize {
     if (node.l) |left| {
         // either have both nodes or none
-        1 + itemCheck(left) + itemCheck(??node.r)
+        return 1 + itemCheck(left) + itemCheck(??node.r);
     } else {
-        1
+        return 1;
     }
 }
 
 fn bottomUpTree(a: &Allocator, depth: usize) -> &TreeNode {
     if (depth > 0) {
-        TreeNode.new(a, bottomUpTree(a, depth - 1), bottomUpTree(a, depth - 1))
+        return TreeNode.new(a, bottomUpTree(a, depth - 1), bottomUpTree(a, depth - 1));
     } else {
-        TreeNode.new(a, null, null)
+        return TreeNode.new(a, null, null);
     }
 }
 
