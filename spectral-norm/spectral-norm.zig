@@ -5,11 +5,11 @@ const std = @import("std");
 const Float = f32;
 const n = 5500;
 
-fn eval_a(i: usize, j: usize) -> Float {
+fn eval_a(i: usize, j: usize) Float {
     return 1.0 / Float((i + j) * (i + j + 1) / 2 + i + 1);
 }
 
-fn eval_a_times_u(comptime transpose: bool, au: []Float, u: []const Float) {
+fn eval_a_times_u(comptime transpose: bool, au: []Float, u: []const Float) void {
     for (au) |*e| {
         *e = 0;
     }
@@ -27,15 +27,15 @@ fn eval_a_times_u(comptime transpose: bool, au: []Float, u: []const Float) {
     }
 }
 
-fn eval_ata_times_u(atau: []Float, u: []const Float) {
+fn eval_ata_times_u(atau: []Float, u: []const Float) void {
     var v: [n]Float = undefined;
 
     eval_a_times_u(false, v[0..], u);
     eval_a_times_u(true, atau, v[0..]);
 }
 
-pub fn main() -> %void {
-    var stdout_file = %return std.io.getStdOut();
+pub fn main() !void {
+    var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
     const stdout = &stdout_out_stream.stream;
 
@@ -61,5 +61,5 @@ pub fn main() -> %void {
         vv += v[i] * v[i];
     }
 
-    _ = stdout.print("{}\n", std.math.sqrt(vbv / vv));
+    try stdout.print("{}\n", std.math.sqrt(vbv / vv));
 }

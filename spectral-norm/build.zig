@@ -1,6 +1,6 @@
 const Builder = @import("std").build.Builder;
 
-pub fn build(b: &Builder) {
+pub fn build(b: &Builder) void {
     const mode = b.standardReleaseOptions();
     const exe = b.addExecutable("spectral-norm", "spectral-norm.zig");
     exe.setBuildMode(mode);

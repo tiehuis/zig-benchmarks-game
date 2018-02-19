@@ -7,20 +7,20 @@ const TreeNode = struct {
     l: ?&TreeNode,
     r: ?&TreeNode,
 
-    pub fn new(a: &Allocator, l: ?&TreeNode, r: ?&TreeNode) -> &TreeNode {
-        var node = %%a.create(TreeNode);
+    pub fn new(a: &Allocator, l: ?&TreeNode, r: ?&TreeNode) !&TreeNode {
+        var node = try a.create(TreeNode);
         node.l = l;
         node.r = r;
 
         return node;
     }
 
-    pub fn free(self: &TreeNode, a: &Allocator) {
+    pub fn free(self: &TreeNode, a: &Allocator) void {
         a.free(self);
     }
 };
 
-fn itemCheck(node: &TreeNode) -> usize {
+fn itemCheck(node: &TreeNode) usize {
     if (node.l) |left| {
         // either have both nodes or none
         return 1 + itemCheck(left) + itemCheck(??node.r);
@@ -29,15 +29,18 @@ fn itemCheck(node: &TreeNode) -> usize {
     }
 }
 
-fn bottomUpTree(a: &Allocator, depth: usize) -> &TreeNode {
+fn bottomUpTree(a: &Allocator, depth: usize) Allocator.Error!&TreeNode {
     if (depth > 0) {
-        return TreeNode.new(a, bottomUpTree(a, depth - 1), bottomUpTree(a, depth - 1));
+        const left = try bottomUpTree(a, depth - 1);
+        const right = try bottomUpTree(a, depth - 1);
+
+        return try TreeNode.new(a, left, right);
     } else {
-        return TreeNode.new(a, null, null);
+        return try TreeNode.new(a, null, null);
     }
 }
 
-fn deleteTree(a: &Allocator, node: &TreeNode) {
+fn deleteTree(a: &Allocator, node: &TreeNode) void {
     if (node.l) |left| {
         // either have both nodes or none
         deleteTree(a, left);
@@ -47,10 +50,10 @@ fn deleteTree(a: &Allocator, node: &TreeNode) {
     a.destroy(node);
 }
 
-var allocator = &std.heap.c_allocator;
+var allocator = std.heap.c_allocator;
 
-pub fn main() -> %void {
-    var stdout_file = %return std.io.getStdOut();
+pub fn main() !void {
+    var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
     const stdout = &stdout_out_stream.stream;
 
@@ -60,11 +63,11 @@ pub fn main() -> %void {
     const max_depth: usize = n;
     const stretch_depth = max_depth + 1;
 
-    const stretch_tree = bottomUpTree(allocator, stretch_depth);
-    _ = stdout.print("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
+    const stretch_tree = try bottomUpTree(allocator, stretch_depth);
+    try stdout.print("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
     deleteTree(allocator, stretch_tree);
 
-    const long_lived_tree = bottomUpTree(allocator, max_depth);
+    const long_lived_tree = try bottomUpTree(allocator, max_depth);
     var depth = min_depth;
     while (depth <= max_depth) : (depth += 2) {
         var iterations = usize(std.math.pow(f32, 2, f32(max_depth - depth + min_depth)));
@@ -72,14 +75,14 @@ pub fn main() -> %void {
 
         var i: usize = 1;
         while (i <= iterations) : (i += 1) {
-            const temp_tree = bottomUpTree(allocator, depth);
+            const temp_tree = try bottomUpTree(allocator, depth);
             check += itemCheck(temp_tree);
             deleteTree(allocator, temp_tree);
         }
 
-        _ = stdout.print("{} trees of depth {}, check {}\n", iterations, depth, check);
+        try stdout.print("{} trees of depth {}, check {}\n", iterations, depth, check);
     }
 
-    _ = stdout.print("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
+    try stdout.print("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
     deleteTree(allocator, long_lived_tree);
 }

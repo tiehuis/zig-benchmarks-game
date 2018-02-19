@@ -1,8 +1,8 @@
 const std = @import("std");
 const Float = f32;
 
-pub fn main() -> %void {
-    var stdout_file = %return std.io.getStdOut();
+pub fn main() !void {
+    var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
     const stdout = &stdout_out_stream.stream;
 
@@ -11,7 +11,7 @@ pub fn main() -> %void {
     const iterations = 50;
     const limit = 2.0;
 
-    _ = stdout.print("P4\n{} {}\n", w, h);
+    try stdout.print("P4\n{} {}\n", w, h);
 
     var ba: u8 = 0;
     var bn: u8 = 0;
@@ -42,12 +42,12 @@ pub fn main() -> %void {
 
             bn += 1;
             if (bn == 8) {
-                _ = stdout.print("{c}", ba);
+                try stdout.print("{c}", ba);
                 ba = 0;
                 bn = 0;
             } else if (x == w - 1) {
                 ba = std.math.shr(u8, ba, 8 - w % 8);
-                _ = stdout.print("{c}", ba);
+                try stdout.print("{c}", ba);
                 ba = 0;
                 bn = 0;
             }

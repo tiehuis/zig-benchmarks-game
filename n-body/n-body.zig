@@ -70,7 +70,7 @@ const solar_bodies = []const Planet {
     },
 };
 
-fn advance(bodies: []Planet, dt: f64, steps: usize) {
+fn advance(bodies: []Planet, dt: f64, steps: usize) void {
     var i: usize = 0;
     while (i < steps) : (i += 1) {
         for (bodies) |*bi, j| {
@@ -102,7 +102,7 @@ fn advance(bodies: []Planet, dt: f64, steps: usize) {
     }
 }
 
-fn energy(bodies: []const Planet) -> f64 {
+fn energy(bodies: []const Planet) f64 {
     var e: f64 = 0.0;
 
     for (bodies) |bi, i| {
@@ -120,7 +120,7 @@ fn energy(bodies: []const Planet) -> f64 {
     return e;
 }
 
-fn offset_momentum(bodies: []Planet) {
+fn offset_momentum(bodies: []Planet) void {
     var px: f64 = 0.0;
     var py: f64 = 0.0;
     var pz: f64 = 0.0;
@@ -137,8 +137,8 @@ fn offset_momentum(bodies: []Planet) {
     sun.vz = -pz / solar_mass;
 }
 
-pub fn main() -> %void {
-    var stdout_file = %return std.io.getStdOut();
+pub fn main() !void {
+    var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
     const stdout = &stdout_out_stream.stream;
 
@@ -146,8 +146,8 @@ pub fn main() -> %void {
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    _ = stdout.print("{}\n", energy(bodies[0..]));
+    try stdout.print("{}\n", energy(bodies[0..]));
 
     advance(bodies[0..], 0.01, n);
-    _ = stdout.print("{}\n", energy(bodies[0..]));
+    try stdout.print("{}\n", energy(bodies[0..]));
 }
