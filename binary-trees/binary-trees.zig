@@ -4,32 +4,31 @@ const Allocator = mem.Allocator;
 const printf = std.io.stdout.printf;
 
 const TreeNode = struct {
-    l: ?&TreeNode,
-    r: ?&TreeNode,
+    l: ?*TreeNode,
+    r: ?*TreeNode,
 
-    pub fn new(a: &Allocator, l: ?&TreeNode, r: ?&TreeNode) !&TreeNode {
-        var node = try a.create(TreeNode);
-        node.l = l;
-        node.r = r;
-
-        return node;
+    pub fn new(a: *Allocator, l: ?*TreeNode, r: ?*TreeNode) !*TreeNode {
+        return try a.create(TreeNode{
+            .l = l,
+            .r = r,
+        });
     }
 
-    pub fn free(self: &TreeNode, a: &Allocator) void {
+    pub fn free(self: *TreeNode, a: *Allocator) void {
         a.free(self);
     }
 };
 
-fn itemCheck(node: &TreeNode) usize {
+fn itemCheck(node: *TreeNode) usize {
     if (node.l) |left| {
         // either have both nodes or none
-        return 1 + itemCheck(left) + itemCheck(??node.r);
+        return 1 + itemCheck(left) + itemCheck(node.r.?);
     } else {
         return 1;
     }
 }
 
-fn bottomUpTree(a: &Allocator, depth: usize) Allocator.Error!&TreeNode {
+fn bottomUpTree(a: *Allocator, depth: usize) Allocator.Error!*TreeNode {
     if (depth > 0) {
         const left = try bottomUpTree(a, depth - 1);
         const right = try bottomUpTree(a, depth - 1);
@@ -40,11 +39,11 @@ fn bottomUpTree(a: &Allocator, depth: usize) Allocator.Error!&TreeNode {
     }
 }
 
-fn deleteTree(a: &Allocator, node: &TreeNode) void {
+fn deleteTree(a: *Allocator, node: *TreeNode) void {
     if (node.l) |left| {
         // either have both nodes or none
         deleteTree(a, left);
-        deleteTree(a, ??node.r);
+        deleteTree(a, node.r.?);
     }
 
     a.destroy(node);
@@ -70,7 +69,7 @@ pub fn main() !void {
     const long_lived_tree = try bottomUpTree(allocator, max_depth);
     var depth = min_depth;
     while (depth <= max_depth) : (depth += 2) {
-        var iterations = usize(std.math.pow(f32, 2, f32(max_depth - depth + min_depth)));
+        var iterations = @floatToInt(usize, std.math.pow(f32, 2, @intToFloat(f32, max_depth - depth + min_depth)));
         var check: usize = 0;
 
         var i: usize = 1;

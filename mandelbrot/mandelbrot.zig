@@ -19,8 +19,8 @@ pub fn main() !void {
     while (y < h) : (y += 1) {
         var x: usize = 0;
         while (x < w) : (x += 1) {
-            const cr = 2.0 * Float(x) / Float(w) - 1.5;
-            const ci = 2.0 * Float(y) / Float(h) - 1.0;
+            const cr = 2.0 * @intToFloat(Float, x) / @intToFloat(Float, w) - 1.5;
+            const ci = 2.0 * @intToFloat(Float, y) / @intToFloat(Float, h) - 1.0;
 
             var zr: Float = 0.0;
             var zi: Float = 0.0;

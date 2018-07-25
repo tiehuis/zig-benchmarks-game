@@ -29,7 +29,7 @@ const PiDigitsIterator = struct {
         return it;
     }
 
-    pub fn deinit(self: &Self) void {
+    pub fn deinit(self: *Self) void {
         c.mpz_clear(&self.t1[0]);
         c.mpz_clear(&self.t2[0]);
         c.mpz_clear(&self.ac[0]);
@@ -37,7 +37,7 @@ const PiDigitsIterator = struct {
         c.mpz_clear(&self.nm[0]);
     }
 
-    pub fn next(self: &Self) ?usize {
+    pub fn next(self: *Self) ?usize {
         while (self.i < self.n) {
             self.nextTerm(self.k);
             self.k += 1;
@@ -60,7 +60,7 @@ const PiDigitsIterator = struct {
         return null;
     }
 
-    fn nextTerm(self: &Self, k: usize) void {
+    fn nextTerm(self: *Self, k: usize) void {
         const k2 = k * 2 + 1;
 
         c.mpz_addmul_ui(&self.ac[0], &self.nm[0], 2);
@@ -69,7 +69,7 @@ const PiDigitsIterator = struct {
         c.mpz_mul_ui(&self.nm[0], &self.nm[0], k);
     }
 
-    fn extractDigit(self: &Self, n: usize) usize {
+    fn extractDigit(self: *Self, n: usize) usize {
         c.mpz_mul_ui(&self.t1[0], &self.nm[0], n);
         c.mpz_add(&self.t2[0], &self.t1[0], &self.ac[0]);
         c.mpz_tdiv_q(&self.t1[0], &self.t2[0], &self.dn[0]);
@@ -77,7 +77,7 @@ const PiDigitsIterator = struct {
         return c.mpz_get_ui(&self.t1[0]);
     }
 
-    fn eliminateDigit(self: &Self, d: usize) void {
+    fn eliminateDigit(self: *Self, d: usize) void {
         c.mpz_submul_ui(&self.ac[0], &self.dn[0], d);
         c.mpz_mul_ui(&self.ac[0], &self.ac[0], 10);
         c.mpz_mul_ui(&self.nm[0], &self.nm[0], 10);

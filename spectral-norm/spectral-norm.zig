@@ -6,12 +6,12 @@ const Float = f32;
 const n = 5500;
 
 fn eval_a(i: usize, j: usize) Float {
-    return 1.0 / Float((i + j) * (i + j + 1) / 2 + i + 1);
+    return 1.0 / @intToFloat(Float, (i + j) * (i + j + 1) / 2 + i + 1);
 }
 
 fn eval_a_times_u(comptime transpose: bool, au: []Float, u: []const Float) void {
     for (au) |*e| {
-        *e = 0;
+        e.* = 0;
     }
 
     var i: usize = 0;
@@ -43,7 +43,7 @@ pub fn main() !void {
     var v: [n]Float = undefined;
 
     for (u) |*e| {
-        *e = 1;
+        e.* = 1;
     }
 
     var i: usize = 0;
