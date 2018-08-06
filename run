@@ -1,0 +1,65 @@
+#!/bin/sh
+
+make
+make -s -C ref
+
+output_file='build/output.txt'
+input_file='build/input100000000.txt'
+if [ ! -f "$input_file" ]; then
+    ./ref/build/fasta 100000000 > "$input_file"
+fi
+
+echo -e "\nFASTA (ZIG) <======================================================="
+time ./build/fasta 25000000 > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nFASTA (C) <========================================================="
+time ./ref/build/fasta 25000000 > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nBINARY-TREES (ZIG) <================================================"
+time ./build/binary-trees 21
+
+echo -e "\nBINARY-TREES (C) <=================================================="
+time ./ref/build/binary-trees 21
+echo ""
+
+echo -e "\nFANNKUCH-REDUX (ZIG) <=============================================="
+time ./build/fannkuch-redux 12
+
+echo -e "\nFANNKUCH-REDUX (C) <================================================"
+time ./ref/build/fannkuch-redux 12
+
+echo -e "\nFASTA (ZIG) <======================================================="
+time ./build/fasta 25000000 > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nFASTA (C) <========================================================="
+time ./ref/build/fasta 25000000 > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nMANDELBROT (ZIG) <=================================================="
+time ./build/mandelbrot 16000 > /dev/null
+
+echo -e "\nMANDELBROT (C) <===================================================="
+time ./ref/build/mandelbrot 16000 > /dev/null
+
+echo -e "\nN-BODY (ZIG) <======================================================"
+time ./build/n-body 50000000
+
+echo -e "\nN-BODY (C) <========================================================"
+time ./ref/build/n-body 50000000
+
+echo -e "\nREVERSE-COMPLEMENT (ZIG) <=========================================="
+time ./build/reverse-complement < "$input_file" > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nREVERSE-COMPLEMENT (C) <============================================"
+time ./ref/build/reverse-complement < "$input_file" > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nSPECTRAL-NORM (ZIG) <==============================================="
+time ./build/spectral-norm 5500
+
+echo -e "\nSPECTRAL-NORM (C) <================================================="
+time ./ref/build/spectral-norm 5500

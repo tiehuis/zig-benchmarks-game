@@ -1,7 +1,5 @@
 const std = @import("std");
-const mem = std.mem;
-const Allocator = mem.Allocator;
-const printf = std.io.stdout.printf;
+const Allocator = std.mem.Allocator;
 
 const TreeNode = struct {
     l: ?*TreeNode,
@@ -56,7 +54,9 @@ pub fn main() !void {
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
     const stdout = &stdout_out_stream.stream;
 
-    const n = 21;
+    var args = std.os.args();
+    _ = args.skip();
+    const n = try std.fmt.parseUnsigned(u8, try args.next(allocator).?, 10);
 
     const min_depth: usize = 4;
     const max_depth: usize = n;

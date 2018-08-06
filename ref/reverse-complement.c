@@ -31,8 +31,9 @@ void process(char *from, char *to) {
    }
 
    char c;
-   for (to--; from <= to; from++, to--)
+   for (to--; from <= to; from++, to--) {
       c = tbl[(int)*from], *from = tbl[(int)*to], *to = c;
+   }
 }
 
 int main() {

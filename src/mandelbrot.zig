@@ -1,13 +1,17 @@
 const std = @import("std");
-const Float = f32;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
-    const stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.BufferedOutStream(std.io.FileOutStream.Error).init(&stdout_out_stream.stream);
+    defer _ = buffered_stdout.flush();
+    var stdout = &buffered_stdout.stream;
 
-    const w: usize = 16000;
+    var args = std.os.args();
+    _ = args.skip();
+    const w = try std.fmt.parseUnsigned(usize, try args.next(std.debug.global_allocator).?, 10);
     const h = w;
+
     const iterations = 50;
     const limit = 2.0;
 
@@ -19,13 +23,13 @@ pub fn main() !void {
     while (y < h) : (y += 1) {
         var x: usize = 0;
         while (x < w) : (x += 1) {
-            const cr = 2.0 * @intToFloat(Float, x) / @intToFloat(Float, w) - 1.5;
-            const ci = 2.0 * @intToFloat(Float, y) / @intToFloat(Float, h) - 1.0;
+            const cr = 2.0 * @intToFloat(f64, x) / @intToFloat(f64, w) - 1.5;
+            const ci = 2.0 * @intToFloat(f64, y) / @intToFloat(f64, h) - 1.0;
 
-            var zr: Float = 0.0;
-            var zi: Float = 0.0;
-            var tr: Float = 0.0;
-            var ti: Float = 0.0;
+            var zr: f64 = 0.0;
+            var zi: f64 = 0.0;
+            var tr: f64 = 0.0;
+            var ti: f64 = 0.0;
 
             var i: usize = 0;
             while (i < iterations and (tr + ti <= limit * limit)) : (i += 1) {

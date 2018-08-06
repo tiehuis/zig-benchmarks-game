@@ -81,9 +81,13 @@ fn generateAndWrap(out: *OutStream(File.WriteError), comptime nucleotides: []con
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
-    const stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.BufferedOutStream(std.io.FileOutStream.Error).init(&stdout_out_stream.stream);
+    defer _ = buffered_stdout.flush();
+    var stdout = &buffered_stdout.stream;
 
-    const n = 25000000;
+    var args = std.os.args();
+    _ = args.skip();
+    const n = try std.fmt.parseUnsigned(u64, try args.next(std.debug.global_allocator).?, 10);
 
     const homo_sapiens_alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTC" ++
         "AGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCG" ++
