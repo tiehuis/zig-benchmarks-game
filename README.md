@@ -24,3 +24,5 @@ make -C ref
  - c
  - make
  - sh
+ - pcre (for c reference)
+ - libgmp (for c reference)

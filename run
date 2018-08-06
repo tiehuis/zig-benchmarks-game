@@ -30,14 +30,6 @@ time ./build/fannkuch-redux 12
 echo -e "\nFANNKUCH-REDUX (C) <================================================"
 time ./ref/build/fannkuch-redux 12
 
-echo -e "\nFASTA (ZIG) <======================================================="
-time ./build/fasta 25000000 > "$output_file"
-md5sum "$output_file"
-
-echo -e "\nFASTA (C) <========================================================="
-time ./ref/build/fasta 25000000 > "$output_file"
-md5sum "$output_file"
-
 echo -e "\nMANDELBROT (ZIG) <=================================================="
 time ./build/mandelbrot 16000 > /dev/null
 
