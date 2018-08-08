@@ -31,16 +31,26 @@ echo -e "\nFANNKUCH-REDUX (C) <================================================"
 time ./ref/build/fannkuch-redux 12
 
 echo -e "\nMANDELBROT (ZIG) <=================================================="
-time ./build/mandelbrot 16000 > /dev/null
+time ./build/mandelbrot 16000 > "$output_file"
+md5sum "$output_file"
 
 echo -e "\nMANDELBROT (C) <===================================================="
-time ./ref/build/mandelbrot 16000 > /dev/null
+time ./ref/build/mandelbrot 16000 > "$output_file"
+md5sum "$output_file"
 
 echo -e "\nN-BODY (ZIG) <======================================================"
 time ./build/n-body 50000000
 
 echo -e "\nN-BODY (C) <========================================================"
 time ./ref/build/n-body 50000000
+
+echo -e "\nPIDIGITS (ZIG) <===================================================="
+time ./build/pidigits 10000 > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nPIDIGITS (C) <======================================================"
+time ./ref/build/pidigits 10000 > "$output_file"
+md5sum "$output_file"
 
 echo -e "\nREVERSE-COMPLEMENT (ZIG) <=========================================="
 time ./build/reverse-complement < "$input_file" > "$output_file"

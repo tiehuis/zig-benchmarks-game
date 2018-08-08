@@ -14,8 +14,8 @@ const table = comptime block: {
 
     var i: usize = 0;
     while (i < pairs.len) : (i += 2) {
-        t[toupper(pairs[i])] = pairs[i+1];
-        t[tolower(pairs[i])] = pairs[i+1];
+        t[toupper(pairs[i])] = pairs[i + 1];
+        t[tolower(pairs[i])] = pairs[i + 1];
     }
 
     break :block t;
@@ -42,9 +42,11 @@ fn process(buf: []u8, ifrom: usize, ito: usize) void {
         }
     }
 
-
     to -= 1;
-    while (from <= to) : ({ from += 1; to -= 1; }) {
+    while (from <= to) : ({
+        from += 1;
+        to -= 1;
+    }) {
         const c = table[buf[from]];
         buf[from] = table[buf[to]];
         buf[to] = c;

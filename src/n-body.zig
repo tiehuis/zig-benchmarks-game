@@ -12,8 +12,12 @@ const solar_mass = 4.0 * math.pi * math.pi;
 const year = 365.24;
 
 const Planet = struct {
-    x: f64, y: f64, z: f64,
-    vx: f64, vy: f64, vz: f64,
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
     mass: f64,
 };
 
@@ -21,7 +25,7 @@ fn advance(bodies: []Planet, dt: f64, steps: usize) void {
     var i: usize = 0;
     while (i < steps) : (i += 1) {
         for (bodies) |*bi, j| {
-            for (bodies[j + 1..]) |*bj| {
+            for (bodies[j + 1 ..]) |*bj| {
                 const dx = bi.x - bj.x;
                 const dy = bi.y - bj.y;
                 const dz = bi.z - bj.z;
@@ -55,7 +59,7 @@ fn energy(bodies: []const Planet) f64 {
     for (bodies) |bi, i| {
         e += 0.5 * (bi.vx * bi.vx + bi.vy * bi.vy + bi.vz * bi.vz) * bi.mass;
 
-        for (bodies[i + 1..]) |bj| {
+        for (bodies[i + 1 ..]) |bj| {
             const dx = bi.x - bj.x;
             const dy = bi.y - bj.y;
             const dz = bi.z - bj.z;
@@ -84,9 +88,9 @@ fn offset_momentum(bodies: []Planet) void {
     sun.vz = -pz / solar_mass;
 }
 
-const solar_bodies = []const Planet {
+const solar_bodies = []const Planet{
     // Sun
-    Planet {
+    Planet{
         .x = 0.0,
         .y = 0.0,
         .z = 0.0,
@@ -96,7 +100,7 @@ const solar_bodies = []const Planet {
         .mass = solar_mass,
     },
     // Jupiter
-    Planet {
+    Planet{
         .x = 4.84143144246472090e+00,
         .y = -1.16032004402742839e+00,
         .z = -1.03622044471123109e-01,
@@ -106,7 +110,7 @@ const solar_bodies = []const Planet {
         .mass = 9.54791938424326609e-04 * solar_mass,
     },
     // Saturn
-    Planet {
+    Planet{
         .x = 8.34336671824457987e+00,
         .y = 4.12479856412430479e+00,
         .z = -4.03523417114321381e-01,
@@ -116,7 +120,7 @@ const solar_bodies = []const Planet {
         .mass = 2.85885980666130812e-04 * solar_mass,
     },
     // Uranus
-    Planet {
+    Planet{
         .x = 1.28943695621391310e+01,
         .y = -1.51111514016986312e+01,
         .z = -2.23307578892655734e-01,
@@ -126,7 +130,7 @@ const solar_bodies = []const Planet {
         .mass = 4.36624404335156298e-05 * solar_mass,
     },
     // Neptune
-    Planet {
+    Planet{
         .x = 1.53796971148509165e+01,
         .y = -2.59193146099879641e+01,
         .z = 1.79258772950371181e-01,

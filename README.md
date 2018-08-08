@@ -1,4 +1,4 @@
-[The Computer Language Benchmarks Game](https://benchmarksgame.alioth.debian.org/) in Zig
+[The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) in Zig.
 
 #### Build Zig solutions
 

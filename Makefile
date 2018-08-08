@@ -4,6 +4,7 @@ all: \
 	build/fasta \
 	build/mandelbrot \
 	build/n-body \
+	build/pidigits \
 	build/reverse-complement \
 	build/spectral-norm
 
@@ -21,6 +22,9 @@ build/mandelbrot: src/mandelbrot.zig | mkdir
 
 build/n-body: src/n-body.zig | mkdir
 	zig build-exe $< --output $@ --release-fast
+
+build/pidigits: src/pidigits.zig | mkdir
+	zig build-exe $< --output $@ --release-fast --library c --library gmp
 
 build/reverse-complement: src/reverse-complement.zig | mkdir
 	zig build-exe $< --output $@ --release-fast --library c
