@@ -1,5 +1,3 @@
-// TODO: Fixup generation issue on final probability example. Printing less than expected.
-
 const std = @import("std");
 const OutStream = std.io.OutStream;
 const File = std.os.File;
@@ -78,6 +76,10 @@ fn generateAndWrap(out: *OutStream(File.WriteError), comptime nucleotides: []con
     }
 }
 
+var buffer: [32]u8 = undefined;
+var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
+var allocator = &fixed_allocator.allocator;
+
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
@@ -87,7 +89,7 @@ pub fn main() !void {
 
     var args = std.os.args();
     _ = args.skip();
-    const n = try std.fmt.parseUnsigned(u64, try args.next(std.debug.global_allocator).?, 10);
+    const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
 
     const homo_sapiens_alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTC" ++
         "AGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCG" ++

@@ -1,6 +1,8 @@
 const std = @import("std");
 
-var allocator = std.debug.global_allocator;
+var buffer: [32]u8 = undefined;
+var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
+var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();

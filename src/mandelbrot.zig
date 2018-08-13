@@ -1,5 +1,9 @@
 const std = @import("std");
 
+var buffer: [32]u8 = undefined;
+var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
+var allocator = &fixed_allocator.allocator;
+
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
@@ -9,7 +13,7 @@ pub fn main() !void {
 
     var args = std.os.args();
     _ = args.skip();
-    const w = try std.fmt.parseUnsigned(usize, try args.next(std.debug.global_allocator).?, 10);
+    const w = try std.fmt.parseUnsigned(usize, try args.next(allocator).?, 10);
     const h = w;
 
     const iterations = 50;
