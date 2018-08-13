@@ -4,7 +4,6 @@ all: \
 	build/fasta \
 	build/mandelbrot \
 	build/n-body \
-	build/pidigits \
 	build/reverse-complement \
 	build/spectral-norm
 
