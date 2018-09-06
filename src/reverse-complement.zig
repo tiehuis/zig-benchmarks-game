@@ -57,11 +57,11 @@ var allocator = std.heap.c_allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
+    var stdout_out_stream = std.io.FileOutStream.init(stdout_file);
     var stdout = &stdout_out_stream.stream;
 
     var stdin_file = try std.io.getStdIn();
-    var stdin = std.io.FileInStream.init(&stdin_file);
+    var stdin = std.io.FileInStream.init(stdin_file);
 
     const buf = try stdin.stream.readAllAlloc(allocator, @maxValue(usize));
     defer allocator.free(buf);
