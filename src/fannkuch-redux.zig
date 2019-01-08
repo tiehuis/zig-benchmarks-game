@@ -1,12 +1,12 @@
 const std = @import("std");
 
-var buffer: [32]u8 = undefined;
+var buffer: [1024]u8 = undefined;
 var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = std.io.FileOutStream.init(stdout_file);
+    var stdout_out_stream = stdout_file.outStream();
     var stdout = &stdout_out_stream.stream;
 
     var args = std.os.args();

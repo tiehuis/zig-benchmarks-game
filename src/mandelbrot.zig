@@ -6,8 +6,8 @@ var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = std.io.FileOutStream.init(stdout_file);
-    var buffered_stdout = std.io.BufferedOutStream(std.io.FileOutStream.Error).init(&stdout_out_stream.stream);
+    var stdout_out_stream = stdout_file.outStream();
+    var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
     defer _ = buffered_stdout.flush();
     var stdout = &buffered_stdout.stream;
 

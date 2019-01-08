@@ -51,7 +51,7 @@ var allocator = std.heap.c_allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = std.io.FileOutStream.init(stdout_file);
+    var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
     var args = std.os.args();
