@@ -1,21 +1,35 @@
 const std = @import("std");
 const c = @cImport(@cInclude("pcre.h"));
 
-fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, replacement: [*]const u8) !usize {
-    var re_eo: c_int = undefined;
-    var re_e: [*c]const u8 = undefined;
+const Regex = struct {
+    re: *c.pcre,
+    re_ex: *c.pcre_extra,
 
-    const re = c.pcre_compile(pattern, 0, &re_e, &re_eo, 0);
-    if (re == null) {
-        return error.FailedToCompileRegex;
+    pub fn compile(pattern: [*]const u8) !Regex {
+        var result: Regex = undefined;
+
+        var re_eo: c_int = undefined;
+        var re_e: [*c]const u8 = undefined;
+
+        const re = c.pcre_compile(pattern, 0, &re_e, &re_eo, 0);
+        if (re) |ok_re| {
+            result.re = ok_re;
+        } else {
+            return error.FailedToCompileRegex;
+        }
+
+        result.re_ex = c.pcre_study(result.re, c.PCRE_STUDY_JIT_COMPILE, &re_e);
+        return result;
     }
-    const re_ex = c.pcre_study(re, c.PCRE_STUDY_JIT_COMPILE, &re_e);
+};
 
+fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, replacement: [*]const u8) !usize {
+    var regex = try Regex.compile(pattern);
     dst.shrink(0);
 
     var pos: c_int = 0;
     var m: [3]c_int = undefined;
-    while (c.pcre_exec(re, re_ex, src.ptr, @intCast(c_int, src.len), pos, 0, &m[0], 3) >= 0) : (pos = m[1]) {
+    while (c.pcre_exec(regex.re, regex.re_ex, src.ptr, @intCast(c_int, src.len), pos, 0, &m[0], 3) >= 0) : (pos = m[1]) {
         const upos = @intCast(usize, pos);
         const clen = @intCast(usize, m[0]) - upos;
         try dst.appendSlice(src[upos .. upos + clen]);
@@ -29,19 +43,12 @@ fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, re
 }
 
 fn countMatches(src: []const u8, pattern: [*]const u8) !usize {
-    var re_eo: c_int = undefined;
-    var re_e: [*c]const u8 = undefined;
-
-    const re = c.pcre_compile(pattern, 0, &re_e, &re_eo, 0);
-    if (re == null) {
-        return error.FailedToCompileRegex;
-    }
-    const re_ex = c.pcre_study(re, c.PCRE_STUDY_JIT_COMPILE, &re_e);
+    var regex = try Regex.compile(pattern);
 
     var count: usize = 0;
     var pos: c_int = 0;
     var m: [3]c_int = undefined;
-    while (c.pcre_exec(re, re_ex, src.ptr, @intCast(c_int, src.len), pos, 0, &m[0], 3) >= 0) : (pos = m[1]) {
+    while (c.pcre_exec(regex.re, regex.re_ex, src.ptr, @intCast(c_int, src.len), pos, 0, &m[0], 3) >= 0) : (pos = m[1]) {
         count += 1;
     }
 
