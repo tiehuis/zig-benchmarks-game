@@ -4,9 +4,15 @@ make
 make -s -C ref
 
 output_file='build/output.txt'
-input_file='build/input100000000.txt'
-if [ ! -f "$input_file" ]; then
-    ./ref/build/fasta 100000000 > "$input_file"
+
+input_file1='build/input5000000.txt'
+if [ ! -f "$input_file1" ]; then
+    ./ref/build/fasta 5000000 > "$input_file1"
+fi
+
+input_file2='build/input100000000.txt'
+if [ ! -f "$input_file2" ]; then
+    ./ref/build/fasta 100000000 > "$input_file2"
 fi
 
 echo -e "\nFASTA (ZIG) <======================================================="
@@ -16,6 +22,12 @@ md5sum "$output_file"
 echo -e "\nFASTA (C) <========================================================="
 time ./ref/build/fasta 25000000 > "$output_file"
 md5sum "$output_file"
+
+echo -e "\nREGEX REDUX (ZIG) <================================================="
+time ./build/regex-redux < "$input_file1"
+
+echo -e "\nREGEX REDUX (C) <==================================================="
+time ./ref/build/regex-redux < "$input_file1"
 
 echo -e "\nBINARY-TREES (ZIG) <================================================"
 time ./build/binary-trees 21
@@ -53,11 +65,11 @@ time ./ref/build/pidigits 10000 > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nREVERSE-COMPLEMENT (ZIG) <=========================================="
-time ./build/reverse-complement < "$input_file" > "$output_file"
+time ./build/reverse-complement < "$input_file2" > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nREVERSE-COMPLEMENT (C) <============================================"
-time ./ref/build/reverse-complement < "$input_file" > "$output_file"
+time ./ref/build/reverse-complement < "$input_file2" > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nSPECTRAL-NORM (ZIG) <==============================================="
