@@ -1,22 +1,20 @@
 const std = @import("std");
 const c = @cImport(@cInclude("gmp.h"));
 
-const MpzPtr = [*]c.__mpz_struct;
+var _tmp1: c.mpz_t = undefined;
+const tmp1 = &_tmp1[0];
 
-var _tmp1: c.__mpz_struct = undefined;
-const tmp1 = @ptrCast(MpzPtr, &_tmp1);
+var _tmp2: c.mpz_t = undefined;
+const tmp2 = &_tmp2[0];
 
-var _tmp2: c.__mpz_struct = undefined;
-const tmp2 = @ptrCast(MpzPtr, &_tmp2);
+var _acc: c.mpz_t = undefined;
+const acc = &_acc[0];
 
-var _acc: c.__mpz_struct = undefined;
-const acc = @ptrCast(MpzPtr, &_acc);
+var _den: c.mpz_t = undefined;
+const den = &_den[0];
 
-var _den: c.__mpz_struct = undefined;
-const den = @ptrCast(MpzPtr, &_den);
-
-var _num: c.__mpz_struct = undefined;
-const num = @ptrCast(MpzPtr, &_num);
+var _num: c.mpz_t = undefined;
+const num = &_num[0];
 
 fn extractDigit(nth: usize) usize {
     c.mpz_mul_ui(tmp1, num, nth);
@@ -43,8 +41,8 @@ fn nextTerm(k: usize) void {
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = std.io.FileOutStream.init(&stdout_file);
-    var buffered_stdout = std.io.BufferedOutStream(std.io.FileOutStream.Error).init(&stdout_out_stream.stream);
+    var stdout_out_stream = stdout_file.outStream();
+    var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
     defer _ = buffered_stdout.flush();
     var stdout = &buffered_stdout.stream;
 

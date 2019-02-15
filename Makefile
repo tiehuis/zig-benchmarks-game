@@ -5,7 +5,8 @@ all: \
 	build/mandelbrot \
 	build/n-body \
 	build/reverse-complement \
-	build/spectral-norm
+	build/spectral-norm \
+	build/pidigits
 
 build/binary-trees: src/binary-trees.zig | mkdir
 	zig build-exe $< --output $@ --release-fast --library c
