@@ -6,14 +6,14 @@ const TreeNode = struct {
     r: ?*TreeNode,
 
     pub fn new(a: *Allocator, l: ?*TreeNode, r: ?*TreeNode) !*TreeNode {
-        return try a.create(TreeNode{
-            .l = l,
-            .r = r,
-        });
+        var node = try a.create(TreeNode);
+        node.l = l;
+        node.r = r;
+        return node;
     }
 
     pub fn free(self: *TreeNode, a: *Allocator) void {
-        a.free(self);
+        a.destroy(self);
     }
 };
 
