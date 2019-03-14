@@ -61,9 +61,11 @@ pub fn main() !void {
     var stdout = &stdout_out_stream.stream;
 
     var stdin_file = try std.io.getStdIn();
-    var stdin = stdin_file.inStream();
+    var stdin_in_stream = stdin_file.inStream();
+    var buffered_stdin = std.io.BufferedInStream(std.os.File.InStream.Error).init(&stdin_in_stream.stream);
+    var stdin = &buffered_stdin.stream;
 
-    const buf = try stdin.stream.readAllAlloc(allocator, std.math.maxInt(usize));
+    const buf = try stdin.readAllAlloc(allocator, std.math.maxInt(usize));
     defer allocator.free(buf);
 
     var to = buf.len - 1;

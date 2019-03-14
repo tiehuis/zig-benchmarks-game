@@ -1,10 +1,5 @@
 const std = @import("std");
 
-const c = @cImport({
-    @cInclude("stdio.h");
-    @cInclude("string.h");
-});
-
 const HashMap = std.HashMap(u64, u32, std.hash_map.getAutoHashFn(u64), std.hash_map.getAutoEqlFn(u64));
 
 inline fn codeForNucleotide(nucleotide: u8) u8 {
@@ -110,28 +105,42 @@ fn generateCount(allocator: *std.mem.Allocator, poly: []const u8, comptime olig:
 }
 
 pub fn main() !void {
+    var allocator = std.heap.c_allocator;
+
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
     defer _ = buffered_stdout.flush();
     var stdout = &buffered_stdout.stream;
 
-    var allocator = std.heap.c_allocator;
+    var stdin_file = try std.io.getStdIn();
+    var stdin_in_stream = stdin_file.inStream();
+    var buffered_stdin = std.io.BufferedInStream(std.os.File.InStream.Error).init(&stdin_in_stream.stream);
+    var stdin = &buffered_stdin.stream;
 
     var buffer: [4096]u8 = undefined;
-    while (c.fgets(buffer[0..].ptr, buffer.len, c.stdin) != 0 and c.memcmp(c">THREE", buffer[0..].ptr, 6) != 0) {}
+
+    while (true) {
+        const line = try std.io.readLineSliceFrom(stdin, buffer[0..]);
+        if (std.mem.startsWith(u8, line, ">THREE")) {
+            break;
+        }
+    }
 
     var poly = std.ArrayList(u8).init(allocator);
     defer poly.deinit();
 
-    while (c.fgets(buffer[0..].ptr, buffer.len, c.stdin) != 0 and buffer[0] != '>') {
-        var i: usize = 0;
-        while (buffer[i] != 0) : (i += 1) {
-            if (buffer[i] != '\n') {
-                try poly.append(codeForNucleotide(buffer[i]));
-            }
+    while (true) {
+        const line = std.io.readLineSliceFrom(stdin, buffer[0..]) catch |err| switch (err) {
+            error.EndOfStream => break,
+            else => return err,
+        };
+
+        for (line) |c| {
+            try poly.append(codeForNucleotide(c));
         }
     }
+
     const poly_shrunk = poly.toOwnedSlice();
 
     const counts = []u8{ 1, 2 };
