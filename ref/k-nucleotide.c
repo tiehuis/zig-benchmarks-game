@@ -212,28 +212,28 @@ int main(){
 	char output_Buffer[7][MAXIMUM_OUTPUT_LENGTH];
 
 	// Do the following functions in parallel.
-	#pragma omp parallel sections
+	//#pragma omp parallel sections
 	{
-		#pragma omp section
+		//#pragma omp section
 		generate_Count_For_Oligonucleotide(polynucleotide
 		  , polynucleotide_Length, "GGTATTTTAATTTATAGT", output_Buffer[6]);
-		#pragma omp section
+		//#pragma omp section
 		generate_Count_For_Oligonucleotide(polynucleotide
 		  , polynucleotide_Length, "GGTATTTTAATT", output_Buffer[5]);
-		#pragma omp section
+		//#pragma omp section
 		generate_Count_For_Oligonucleotide(polynucleotide
 		  , polynucleotide_Length, "GGTATT", output_Buffer[4]);
-		#pragma omp section
+		//#pragma omp section
 		generate_Count_For_Oligonucleotide(polynucleotide
 		  , polynucleotide_Length, "GGTA", output_Buffer[3]);
-		#pragma omp section
+		//#pragma omp section
 		generate_Count_For_Oligonucleotide(polynucleotide
 		  , polynucleotide_Length, "GGT", output_Buffer[2]);
 
-		#pragma omp section
+		//#pragma omp section
 		generate_Frequencies_For_Desired_Length_Oligonucleotides(polynucleotide
 		  , polynucleotide_Length, 2, output_Buffer[1]);
-		#pragma omp section
+		//#pragma omp section
 		generate_Frequencies_For_Desired_Length_Oligonucleotides(polynucleotide
 		  , polynucleotide_Length, 1, output_Buffer[0]);
 	}

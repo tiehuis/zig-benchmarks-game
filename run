@@ -1,7 +1,4 @@
-#!/bin/sh
-
-make
-make -s -C ref
+#!/bin/bash
 
 output_file='build/output.txt'
 
@@ -10,10 +7,23 @@ if [ ! -f "$input_file1" ]; then
     ./ref/build/fasta 5000000 > "$input_file1"
 fi
 
-input_file2='build/input100000000.txt'
+input_file2='build/input25000000.txt'
 if [ ! -f "$input_file2" ]; then
-    ./ref/build/fasta 100000000 > "$input_file2"
+    ./ref/build/fasta 25000000 > "$input_file2"
 fi
+
+input_file3='build/input100000000.txt'
+if [ ! -f "$input_file3" ]; then
+    ./ref/build/fasta 100000000 > "$input_file3"
+fi
+
+echo -e "\nK-NUCLEOTIDE (ZIG) <================================================"
+time ./build/k-nucleotide < "$input_file2" > "$output_file"
+md5sum "$output_file"
+
+echo -e "\nK-NUCLEOTIDE (C) <=================================================="
+time ./ref/build/k-nucleotide < "$input_file2" > "$output_file"
+md5sum "$output_file"
 
 echo -e "\nFASTA (ZIG) <======================================================="
 time ./build/fasta 25000000 > "$output_file"
@@ -65,11 +75,11 @@ time ./ref/build/pidigits 10000 > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nREVERSE-COMPLEMENT (ZIG) <=========================================="
-time ./build/reverse-complement < "$input_file2" > "$output_file"
+time ./build/reverse-complement < "$input_file3" > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nREVERSE-COMPLEMENT (C) <============================================"
-time ./ref/build/reverse-complement < "$input_file2" > "$output_file"
+time ./ref/build/reverse-complement < "$input_file3" > "$output_file"
 md5sum "$output_file"
 
 echo -e "\nSPECTRAL-NORM (ZIG) <==============================================="

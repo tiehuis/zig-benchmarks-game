@@ -1,9 +1,3 @@
-// NOTE: This is slow, test the following to see what helps:
-//
-// - use hardware sqrt instruction instead of library
-// - increase unroll level a lot to see if this helps
-// - determine why our accuracy is slightly off here
-
 const std = @import("std");
 const builtin = @import("builtin");
 const math = std.math;
