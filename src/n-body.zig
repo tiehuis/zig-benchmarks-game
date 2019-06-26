@@ -82,7 +82,7 @@ fn offset_momentum(bodies: []Planet) void {
     sun.vz = -pz / solar_mass;
 }
 
-const solar_bodies = []const Planet{
+const solar_bodies = [_]Planet{
     // Sun
     Planet{
         .x = 0.0,
@@ -144,15 +144,15 @@ pub fn main() !void {
     var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
-    var args = std.os.args();
+    var args = std.process.args();
     _ = args.skip();
     const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
 
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    try stdout.print("{.9}\n", energy(bodies[0..]));
+    try stdout.print("{:.9}\n", energy(bodies[0..]));
 
     advance(bodies[0..], 0.01, n);
-    try stdout.print("{.9}\n", energy(bodies[0..]));
+    try stdout.print("{:.9}\n", energy(bodies[0..]));
 }

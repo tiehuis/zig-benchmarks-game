@@ -62,7 +62,7 @@ pub fn main() !void {
 
     var stdin_file = try std.io.getStdIn();
     var stdin_in_stream = stdin_file.inStream();
-    var buffered_stdin = std.io.BufferedInStream(std.os.File.InStream.Error).init(&stdin_in_stream.stream);
+    var buffered_stdin = std.io.BufferedInStream(std.fs.File.InStream.Error).init(&stdin_in_stream.stream);
     var stdin = &buffered_stdin.stream;
 
     const buf = try stdin.readAllAlloc(allocator, std.math.maxInt(usize));

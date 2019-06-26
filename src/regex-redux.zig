@@ -33,7 +33,7 @@ fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, re
         const upos = @intCast(usize, pos);
         const clen = @intCast(usize, m[0]) - upos;
         try dst.appendSlice(src[upos .. upos + clen]);
-        try dst.appendSlice(std.cstr.toSliceConst(replacement));
+        try dst.appendSlice(std.mem.toSliceConst(u8, replacement));
     }
 
     const upos = @intCast(usize, pos);
@@ -55,7 +55,7 @@ fn countMatches(src: []const u8, pattern: [*]const u8) !usize {
     return count;
 }
 
-const variants = [][*]const u8{
+const variants = [_][*]const u8{
     c"agggtaaa|tttaccct",
     c"[cgt]gggtaaa|tttaccc[acg]",
     c"a[act]ggtaaa|tttacc[agt]t",
@@ -67,12 +67,12 @@ const variants = [][*]const u8{
     c"agggtaa[cgt]|[acg]ttaccct",
 };
 
-const subs = [][*]const u8{
-    c"tHa[Nt]", c"<4>",
+const subs = [_][*]const u8{
+    c"tHa[Nt]",            c"<4>",
     c"aND|caN|Ha[DS]|WaS", c"<3>",
-    c"a[NSt]|BY", c"<2>",
-    c"<[^>]*>", c"|",
-    c"\\|[^|][^|]*\\|", c"-",
+    c"a[NSt]|BY",          c"<2>",
+    c"<[^>]*>",            c"|",
+    c"\\|[^|][^|]*\\|",    c"-",
 };
 
 pub fn main() !void {

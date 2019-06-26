@@ -1,6 +1,6 @@
 const std = @import("std");
 const OutStream = std.io.OutStream;
-const File = std.os.File;
+const File = std.fs.File;
 
 const max_line_length = 60;
 
@@ -30,8 +30,8 @@ fn repeatAndWrap(out: *OutStream(File.WriteError), comptime sequence: []const u8
         const rem = count - idx;
         const line_length = std.math.min(usize(max_line_length), rem);
 
-        _ = out.write(padded_sequence[off .. off + line_length]);
-        _ = out.writeByte('\n');
+        _ = out.write(padded_sequence[off .. off + line_length]) catch {};
+        _ = out.writeByte('\n') catch {};
 
         off += line_length;
         if (off > sequence.len) {
@@ -71,7 +71,7 @@ fn generateAndWrap(out: *OutStream(File.WriteError), comptime nucleotides: []con
         }
 
         line[line_length] = '\n';
-        _ = out.write(line[0 .. line_length + 1]);
+        _ = out.write(line[0 .. line_length + 1]) catch {};
         idx += line_length;
     }
 }
@@ -83,11 +83,11 @@ var allocator = &fixed_allocator.allocator;
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush();
+    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
+    defer _ = buffered_stdout.flush() catch {};
     var stdout = &buffered_stdout.stream;
 
-    var args = std.os.args();
+    var args = std.process.args();
     _ = args.skip();
     const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
 
@@ -98,7 +98,7 @@ pub fn main() !void {
     try stdout.write(">ONE Homo sapiens alu\n");
     repeatAndWrap(stdout, homo_sapiens_alu, 2 * n);
 
-    const iub_nucleotide_info = []const AminoAcid{
+    const iub_nucleotide_info = [_]AminoAcid{
         AminoAcid{ .l = 'a', .p = 0.27 },
         AminoAcid{ .l = 'c', .p = 0.12 },
         AminoAcid{ .l = 'g', .p = 0.12 },
@@ -118,7 +118,7 @@ pub fn main() !void {
     try stdout.write(">TWO IUB ambiguity codes\n");
     generateAndWrap(stdout, iub_nucleotide_info, 3 * n);
 
-    const homo_sapien_nucleotide_info = []const AminoAcid{
+    const homo_sapien_nucleotide_info = [_]AminoAcid{
         AminoAcid{ .l = 'a', .p = 0.3029549426680 },
         AminoAcid{ .l = 'c', .p = 0.1979883004921 },
         AminoAcid{ .l = 'g', .p = 0.1975473066391 },
