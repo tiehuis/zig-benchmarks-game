@@ -3,7 +3,7 @@ const std = @import("std");
 const HashMap = std.HashMap(u64, u32, std.hash_map.getAutoHashFn(u64), std.hash_map.getAutoEqlFn(u64));
 
 inline fn codeForNucleotide(nucleotide: u8) u8 {
-    const lookup = []const u8{ ' ', 0, ' ', 1, 3, ' ', ' ', 2 };
+    const lookup = [_]u8{ ' ', 0, ' ', 1, 3, ' ', ' ', 2 };
     return lookup[nucleotide & 0x7];
 }
 
@@ -61,7 +61,7 @@ fn generateFrequenciesForLength(allocator: *std.mem.Allocator, poly: []const u8,
 
         const slice = try std.fmt.bufPrint(
             output[position..],
-            "{} {.3}\n",
+            "{} {:.3}\n",
             olig[0..],
             100.0 * @intToFloat(f64, entry.value) / @intToFloat(f64, poly.len - desired_length + 1),
         );
@@ -109,13 +109,13 @@ pub fn main() !void {
 
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush();
+    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
+    defer _ = buffered_stdout.flush() catch {};
     var stdout = &buffered_stdout.stream;
 
     var stdin_file = try std.io.getStdIn();
     var stdin_in_stream = stdin_file.inStream();
-    var buffered_stdin = std.io.BufferedInStream(std.os.File.InStream.Error).init(&stdin_in_stream.stream);
+    var buffered_stdin = std.io.BufferedInStream(std.fs.File.InStream.Error).init(&stdin_in_stream.stream);
     var stdin = &buffered_stdin.stream;
 
     var buffer: [4096]u8 = undefined;
@@ -143,8 +143,8 @@ pub fn main() !void {
 
     const poly_shrunk = poly.toOwnedSlice();
 
-    const counts = []u8{ 1, 2 };
-    const entries = [][]const u8{ "GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT" };
+    const counts = [_]u8{ 1, 2 };
+    const entries = [_][]const u8{ "GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT" };
 
     var output: [counts.len + entries.len][4096]u8 = undefined;
 

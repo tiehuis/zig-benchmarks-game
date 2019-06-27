@@ -9,7 +9,7 @@ pub fn main() !void {
     var stdout_out_stream = stdout_file.outStream();
     var stdout = &stdout_out_stream.stream;
 
-    var args = std.os.args();
+    var args = std.process.args();
     _ = args.skip();
     const n = try std.fmt.parseUnsigned(u8, try args.next(allocator).?, 10);
 

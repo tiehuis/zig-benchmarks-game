@@ -12,7 +12,7 @@ const Target = struct {
     cflags: []const u8,
 };
 
-const targets = []Target{
+const targets = [_]Target{
     Target{
         .name = "k-nucleotide",
         .libs = "c",
@@ -86,7 +86,7 @@ const CreateDirStep = struct {
         const self = @fieldParentPtr(CreateDirStep, "step", step);
 
         const full_path = self.builder.pathFromRoot(self.dir_path);
-        std.os.makeDir(full_path) catch |err| {
+        std.fs.makeDir(full_path) catch |err| {
             if (self.allow_existing and err == error.PathAlreadyExists) {
                 return;
             }
@@ -104,8 +104,7 @@ fn addCreateDirStep(self: *Builder, dir_path: []const u8, allow_existing: bool) 
 }
 
 pub fn build(b: *Builder) !void {
-    var direct = std.heap.DirectAllocator.init();
-    var allocator = &direct.allocator;
+    const allocator = std.heap.direct_allocator;
 
     const create_build_dir = addCreateDirStep(b, build_path, true);
     const create_build_c_dir = addCreateDirStep(b, build_path_c, true);

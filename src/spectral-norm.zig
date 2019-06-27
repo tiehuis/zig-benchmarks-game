@@ -29,14 +29,14 @@ fn eval_ata_times_u(atau: []f64, u: []const f64, scratch: []f64) void {
     eval_a_times_u(true, atau, scratch);
 }
 
-var allocator = &std.heap.DirectAllocator.init().allocator;
+const allocator = std.heap.direct_allocator;
 
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
-    var args = std.os.args();
+    var args = std.process.args();
     _ = args.skip();
     const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
 
@@ -63,5 +63,5 @@ pub fn main() !void {
         vv += v[i] * v[i];
     }
 
-    try stdout.print("{.9}\n", std.math.sqrt(vbv / vv));
+    try stdout.print("{:.9}\n", std.math.sqrt(vbv / vv));
 }

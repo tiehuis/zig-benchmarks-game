@@ -42,11 +42,11 @@ fn nextTerm(k: usize) void {
 pub fn main() !void {
     var stdout_file = try std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.os.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush();
+    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
+    defer _ = buffered_stdout.flush() catch {};
     var stdout = &buffered_stdout.stream;
 
-    var args = std.os.args();
+    var args = std.process.args();
     _ = args.skip();
     const n = try std.fmt.parseUnsigned(usize, try args.next(std.heap.c_allocator).?, 10);
 
