@@ -140,7 +140,7 @@ var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
@@ -151,8 +151,8 @@ pub fn main() !void {
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    try stdout.print("{:.9}\n", energy(bodies[0..]));
+    try stdout.print("{:.9}\n", .{energy(bodies[0..])});
 
     advance(bodies[0..], 0.01, n);
-    try stdout.print("{:.9}\n", energy(bodies[0..]));
+    try stdout.print("{:.9}\n", .{energy(bodies[0..])});
 }

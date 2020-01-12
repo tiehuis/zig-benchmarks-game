@@ -40,7 +40,7 @@ fn nextTerm(k: usize) void {
 }
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
     defer _ = buffered_stdout.flush() catch {};
@@ -70,10 +70,10 @@ pub fn main() !void {
             continue;
         }
 
-        try stdout.print("{c}", @intCast(u8, '0' + d));
+        try stdout.print("{c}", .{@intCast(u8, '0' + d)});
         i += 1;
         if (i % 10 == 0) {
-            try stdout.print("\t:{}\n", i);
+            try stdout.print("\t:{}\n", .{i});
         }
         eliminateDigit(d);
     }

@@ -56,11 +56,11 @@ fn process(buf: []u8, ifrom: usize, ito: usize) void {
 var allocator = std.heap.c_allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     var stdout = &stdout_out_stream.stream;
 
-    var stdin_file = try std.io.getStdIn();
+    var stdin_file = std.io.getStdIn();
     var stdin_in_stream = stdin_file.inStream();
     var buffered_stdin = std.io.BufferedInStream(std.fs.File.InStream.Error).init(&stdin_in_stream.stream);
     var stdin = &buffered_stdin.stream;
