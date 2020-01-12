@@ -32,7 +32,7 @@ fn eval_ata_times_u(atau: []f64, u: []const f64, scratch: []f64) void {
 const allocator = std.heap.direct_allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
@@ -63,5 +63,5 @@ pub fn main() !void {
         vv += v[i] * v[i];
     }
 
-    try stdout.print("{:.9}\n", std.math.sqrt(vbv / vv));
+    try stdout.print("{:.9}\n", .{std.math.sqrt(vbv / vv)});
 }

@@ -50,7 +50,7 @@ fn deleteTree(a: *Allocator, node: *TreeNode) void {
 var allocator = std.heap.c_allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     const stdout = &stdout_out_stream.stream;
 
@@ -63,7 +63,7 @@ pub fn main() !void {
     const stretch_depth = max_depth + 1;
 
     const stretch_tree = try bottomUpTree(allocator, stretch_depth);
-    try stdout.print("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
+    try stdout.print("depth {}, check {}\n", .{ stretch_depth, itemCheck(stretch_tree) });
     deleteTree(allocator, stretch_tree);
 
     const long_lived_tree = try bottomUpTree(allocator, max_depth);
@@ -79,9 +79,9 @@ pub fn main() !void {
             deleteTree(allocator, temp_tree);
         }
 
-        try stdout.print("{} trees of depth {}, check {}\n", iterations, depth, check);
+        try stdout.print("{} trees of depth {}, check {}\n", .{ iterations, depth, check });
     }
 
-    try stdout.print("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
+    try stdout.print("long lived tree of depth {}, check {}\n", .{ max_depth, itemCheck(long_lived_tree) });
     deleteTree(allocator, long_lived_tree);
 }

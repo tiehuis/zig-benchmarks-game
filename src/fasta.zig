@@ -28,7 +28,7 @@ fn repeatAndWrap(out: *OutStream(File.WriteError), comptime sequence: []const u8
     var idx: usize = 0;
     while (idx < count) {
         const rem = count - idx;
-        const line_length = std.math.min(usize(max_line_length), rem);
+        const line_length = std.math.min(max_line_length, rem);
 
         _ = out.write(padded_sequence[off .. off + line_length]) catch {};
         _ = out.writeByte('\n') catch {};
@@ -55,7 +55,7 @@ fn generateAndWrap(out: *OutStream(File.WriteError), comptime nucleotides: []con
     var idx: usize = 0;
     while (idx < count) {
         const rem = count - idx;
-        const line_length = std.math.min(usize(max_line_length), rem);
+        const line_length = std.math.min(max_line_length, rem);
 
         for (line[0..line_length]) |*col| {
             const r = nextRandom(im);
@@ -81,7 +81,7 @@ var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
+    var stdout_file = std.io.getStdOut();
     var stdout_out_stream = stdout_file.outStream();
     var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
     defer _ = buffered_stdout.flush() catch {};
@@ -116,7 +116,7 @@ pub fn main() !void {
         AminoAcid{ .l = 'Y', .p = 0.02 },
     };
     try stdout.write(">TWO IUB ambiguity codes\n");
-    generateAndWrap(stdout, iub_nucleotide_info, 3 * n);
+    generateAndWrap(stdout, &iub_nucleotide_info, 3 * n);
 
     const homo_sapien_nucleotide_info = [_]AminoAcid{
         AminoAcid{ .l = 'a', .p = 0.3029549426680 },
@@ -125,5 +125,5 @@ pub fn main() !void {
         AminoAcid{ .l = 't', .p = 0.3015094502008 },
     };
     try stdout.write(">THREE Homo sapiens frequency\n");
-    generateAndWrap(stdout, homo_sapien_nucleotide_info, 5 * n);
+    generateAndWrap(stdout, &homo_sapien_nucleotide_info, 5 * n);
 }

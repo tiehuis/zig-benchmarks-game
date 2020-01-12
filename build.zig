@@ -76,7 +76,7 @@ const CreateDirStep = struct {
     pub fn init(builder: *Builder, dir_path: []const u8, allow_existing: bool) CreateDirStep {
         return CreateDirStep{
             .builder = builder,
-            .step = Step.init(builder.fmt("CreateDir {}", dir_path), builder.allocator, make),
+            .step = Step.init(builder.fmt("CreateDir {}", .{dir_path}), builder.allocator, make),
             .dir_path = dir_path,
             .allow_existing = allow_existing,
         };
@@ -91,7 +91,7 @@ const CreateDirStep = struct {
                 return;
             }
 
-            std.debug.warn("Unable to create {}: {}\n", full_path, @errorName(err));
+            std.debug.warn("Unable to create {}: {}\n", .{ full_path, @errorName(err) });
             return err;
         };
     }
