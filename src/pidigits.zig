@@ -1,20 +1,12 @@
 const std = @import("std");
 const c = @cImport(@cInclude("gmp.h"));
 
-var _tmp1: c.mpz_t = undefined;
-const tmp1 = &_tmp1[0];
-
-var _tmp2: c.mpz_t = undefined;
-const tmp2 = &_tmp2[0];
-
-var _acc: c.mpz_t = undefined;
-const acc = &_acc[0];
-
-var _den: c.mpz_t = undefined;
-const den = &_den[0];
-
-var _num: c.mpz_t = undefined;
-const num = &_num[0];
+var _storage: [5]c.mpz_t = undefined;
+const tmp1 = &_storage[0];
+const tmp2 = &_storage[1];
+const acc = &_storage[2];
+const den = &_storage[3];
+const num = &_storage[4];
 
 fn extractDigit(nth: usize) usize {
     c.mpz_mul_ui(tmp1, num, nth);
@@ -39,16 +31,19 @@ fn nextTerm(k: usize) void {
     c.mpz_mul_ui(num, num, k);
 }
 
-pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush() catch {};
-    var stdout = &buffered_stdout.stream;
+var buffer: [256]u8 = undefined;
+var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
+var allocator = &fixed_allocator.allocator;
 
-    var args = std.process.args();
-    _ = args.skip();
-    const n = try std.fmt.parseUnsigned(usize, try args.next(std.heap.c_allocator).?, 10);
+pub fn main() !void {
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
+
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const n = try std.fmt.parseUnsigned(usize, args[1], 10);
 
     c.mpz_init(tmp1);
     c.mpz_init(tmp2);
@@ -70,10 +65,10 @@ pub fn main() !void {
             continue;
         }
 
-        try stdout.print("{c}", @intCast(u8, '0' + d));
+        try stdout.print("{c}", .{@intCast(u8, '0' + d)});
         i += 1;
         if (i % 10 == 0) {
-            try stdout.print("\t:{}\n", i);
+            try stdout.print("\t:{}\n", .{i});
         }
         eliminateDigit(d);
     }

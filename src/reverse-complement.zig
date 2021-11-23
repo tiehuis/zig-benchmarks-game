@@ -9,7 +9,7 @@ fn toupper(c: usize) usize {
 }
 
 const pairs = "ATCGGCTAUAMKRYWWSSYRKMVBHDDHBVNN\n\n";
-const table = comptime block: {
+const table = block: {
     var t: [128]u8 = undefined;
 
     var i: usize = 0;
@@ -53,17 +53,16 @@ fn process(buf: []u8, ifrom: usize, ito: usize) void {
     }
 }
 
-var allocator = std.heap.c_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var allocator = &gpa.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    var stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var stdin_file = try std.io.getStdIn();
-    var stdin_in_stream = stdin_file.inStream();
-    var buffered_stdin = std.io.BufferedInStream(std.fs.File.InStream.Error).init(&stdin_in_stream.stream);
-    var stdin = &buffered_stdin.stream;
+    var buffered_stdin = std.io.bufferedReader(std.io.getStdIn().reader());
+    const stdin = buffered_stdin.reader();
 
     const buf = try stdin.readAllAlloc(allocator, std.math.maxInt(usize));
     defer allocator.free(buf);
@@ -80,5 +79,5 @@ pub fn main() !void {
         to = from - 1;
     }
 
-    try stdout.write(buf);
+    _ = try stdout.write(buf);
 }

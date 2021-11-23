@@ -47,23 +47,25 @@ fn deleteTree(a: *Allocator, node: *TreeNode) void {
     a.destroy(node);
 }
 
-var allocator = std.heap.c_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var allocator = &gpa.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    const stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var args = std.process.args();
-    _ = args.skip();
-    const n = try std.fmt.parseUnsigned(u8, try args.next(allocator).?, 10);
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const n = try std.fmt.parseUnsigned(usize, args[1], 10);
 
     const min_depth: usize = 4;
     const max_depth: usize = n;
     const stretch_depth = max_depth + 1;
 
     const stretch_tree = try bottomUpTree(allocator, stretch_depth);
-    try stdout.print("depth {}, check {}\n", stretch_depth, itemCheck(stretch_tree));
+    _ = try stdout.print("depth {}, check {}\n", .{ stretch_depth, itemCheck(stretch_tree) });
     deleteTree(allocator, stretch_tree);
 
     const long_lived_tree = try bottomUpTree(allocator, max_depth);
@@ -79,9 +81,9 @@ pub fn main() !void {
             deleteTree(allocator, temp_tree);
         }
 
-        try stdout.print("{} trees of depth {}, check {}\n", iterations, depth, check);
+        _ = try stdout.print("{} trees of depth {}, check {}\n", .{ iterations, depth, check });
     }
 
-    try stdout.print("long lived tree of depth {}, check {}\n", max_depth, itemCheck(long_lived_tree));
+    _ = try stdout.print("long lived tree of depth {}, check {}\n", .{ max_depth, itemCheck(long_lived_tree) });
     deleteTree(allocator, long_lived_tree);
 }

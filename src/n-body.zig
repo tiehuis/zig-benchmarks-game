@@ -1,8 +1,6 @@
 const std = @import("std");
-const builtin = @import("builtin");
-const math = std.math;
 
-const solar_mass = 4.0 * math.pi * math.pi;
+const solar_mass = 4.0 * std.math.pi * std.math.pi;
 const year = 365.24;
 
 const Planet = struct {
@@ -25,7 +23,7 @@ fn advance(bodies: []Planet, dt: f64, steps: usize) void {
                 const dz = bi.z - bj.z;
 
                 const dsq = dx * dx + dy * dy + dz * dz;
-                const dst = math.sqrt(dsq);
+                const dst = @sqrt(dsq);
                 const mag = dt / (dsq * dst);
                 const mi = bi.mass;
 
@@ -57,7 +55,7 @@ fn energy(bodies: []const Planet) f64 {
             const dx = bi.x - bj.x;
             const dy = bi.y - bj.y;
             const dz = bi.z - bj.z;
-            const dist = math.sqrt(dx * dx + dy * dy + dz * dz);
+            const dist = @sqrt(dx * dx + dy * dy + dz * dz);
             e -= bi.mass * bj.mass / dist;
         }
     }
@@ -135,24 +133,25 @@ const solar_bodies = [_]Planet{
     },
 };
 
-var buffer: [32]u8 = undefined;
+var buffer: [256]u8 = undefined;
 var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    const stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var args = std.process.args();
-    _ = args.skip();
-    const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const n = try std.fmt.parseUnsigned(u64, args[1], 10);
 
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    try stdout.print("{:.9}\n", energy(bodies[0..]));
+    _ = try stdout.print("{:.9}\n", .{energy(bodies[0..])});
 
     advance(bodies[0..], 0.01, n);
-    try stdout.print("{:.9}\n", energy(bodies[0..]));
+    _ = try stdout.print("{:.9}\n", .{energy(bodies[0..])});
 }

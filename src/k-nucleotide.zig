@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const HashMap = std.HashMap(u64, u32, std.hash_map.getAutoHashFn(u64), std.hash_map.getAutoEqlFn(u64));
+const HashMap = std.AutoHashMap(u64, u32);
 
 inline fn codeForNucleotide(nucleotide: u8) u8 {
     const lookup = [_]u8{ ' ', 0, ' ', 1, 3, ' ', ' ', 2 };
@@ -11,7 +11,7 @@ inline fn nucleotideForCode(code: u8) u8 {
     return "ACGT"[code & 0x3];
 }
 
-fn kvLessThan(lhs: HashMap.KV, rhs: HashMap.KV) bool {
+fn kvLessThan(_: void, lhs: HashMap.KV, rhs: HashMap.KV) bool {
     if (lhs.value < rhs.value) return false;
     if (lhs.value > rhs.value) return true;
     return lhs.key < rhs.key;
@@ -21,7 +21,7 @@ fn generateFrequenciesForLength(allocator: *std.mem.Allocator, poly: []const u8,
     var hash = HashMap.init(allocator);
     defer hash.deinit();
 
-    const mask = (u64(1) << (2 * desired_length)) - 1;
+    const mask = (@as(u64, 1) << (2 * desired_length)) - 1;
 
     {
         var key: u64 = 0;
@@ -34,21 +34,21 @@ fn generateFrequenciesForLength(allocator: *std.mem.Allocator, poly: []const u8,
         while (i < poly.len) : (i += 1) {
             key = ((key << 2) & mask) | poly[i];
             var entry = try hash.getOrPutValue(key, 0);
-            entry.value += 1;
+            entry.value_ptr.* += 1;
         }
     }
 
-    var list = try allocator.alloc(HashMap.KV, hash.size);
+    var list = try allocator.alloc(HashMap.KV, hash.count());
     defer allocator.free(list);
 
     var i: usize = 0;
     var it = hash.iterator();
     while (it.next()) |entry| {
-        list[i] = entry.*;
+        list[i] = HashMap.KV{ .key = entry.key_ptr.*, .value = entry.value_ptr.* };
         i += 1;
     }
 
-    std.sort.sort(HashMap.KV, list, kvLessThan);
+    std.sort.sort(HashMap.KV, list, {}, kvLessThan);
 
     var position: usize = 0;
     for (list) |*entry| {
@@ -61,9 +61,8 @@ fn generateFrequenciesForLength(allocator: *std.mem.Allocator, poly: []const u8,
 
         const slice = try std.fmt.bufPrint(
             output[position..],
-            "{} {:.3}\n",
-            olig[0..],
-            100.0 * @intToFloat(f64, entry.value) / @intToFloat(f64, poly.len - desired_length + 1),
+            "{s} {:.3}\n",
+            .{ olig[0..], 100.0 * @intToFloat(f64, entry.value) / @intToFloat(f64, poly.len - desired_length + 1) },
         );
         position += slice.len;
         output[position] = 0;
@@ -74,7 +73,7 @@ fn generateCount(allocator: *std.mem.Allocator, poly: []const u8, comptime olig:
     var hash = HashMap.init(allocator);
     defer hash.deinit();
 
-    const mask = (u64(1) << (2 * olig.len)) - 1;
+    const mask = (@as(u64, 1) << (2 * olig.len)) - 1;
 
     {
         var key: u64 = 0;
@@ -87,7 +86,7 @@ fn generateCount(allocator: *std.mem.Allocator, poly: []const u8, comptime olig:
         while (i < poly.len) : (i += 1) {
             key = ((key << 2) & mask) | poly[i];
             var entry = try hash.getOrPutValue(key, 0);
-            entry.value += 1;
+            entry.value_ptr.* += 1;
         }
     }
 
@@ -98,30 +97,26 @@ fn generateCount(allocator: *std.mem.Allocator, poly: []const u8, comptime olig:
             key = ((key << 2) & mask) | codeForNucleotide(olig[i]);
         }
 
-        const count = if (hash.get(key)) |entry| entry.value else 0;
-        const slice = try std.fmt.bufPrint(output, "{}\t{}", count, olig);
+        const count = hash.get(key) orelse 0;
+        const slice = try std.fmt.bufPrint(output, "{}\t{s}", .{ count, olig });
         output[slice.len] = 0;
     }
 }
 
 pub fn main() !void {
-    var allocator = std.heap.c_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var allocator = &gpa.allocator;
 
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush() catch {};
-    var stdout = &buffered_stdout.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var stdin_file = try std.io.getStdIn();
-    var stdin_in_stream = stdin_file.inStream();
-    var buffered_stdin = std.io.BufferedInStream(std.fs.File.InStream.Error).init(&stdin_in_stream.stream);
-    var stdin = &buffered_stdin.stream;
+    var buffered_stdin = std.io.bufferedReader(std.io.getStdIn().reader());
+    const stdin = buffered_stdin.reader();
 
     var buffer: [4096]u8 = undefined;
 
-    while (true) {
-        const line = try std.io.readLineSliceFrom(stdin, buffer[0..]);
+    while (try stdin.readUntilDelimiterOrEof(buffer[0..], '\n')) |line| {
         if (std.mem.startsWith(u8, line, ">THREE")) {
             break;
         }
@@ -130,12 +125,7 @@ pub fn main() !void {
     var poly = std.ArrayList(u8).init(allocator);
     defer poly.deinit();
 
-    while (true) {
-        const line = std.io.readLineSliceFrom(stdin, buffer[0..]) catch |err| switch (err) {
-            error.EndOfStream => break,
-            else => return err,
-        };
-
+    while (try stdin.readUntilDelimiterOrEof(buffer[0..], '\n')) |line| {
         for (line) |c| {
             try poly.append(codeForNucleotide(c));
         }
@@ -157,6 +147,6 @@ pub fn main() !void {
     }
 
     for (output) |entry| {
-        try stdout.print("{s}\n", entry[0..].ptr);
+        _ = try stdout.print("{s}\n", .{entry[0..]});
     }
 }

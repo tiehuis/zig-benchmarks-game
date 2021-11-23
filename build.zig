@@ -76,7 +76,7 @@ const CreateDirStep = struct {
     pub fn init(builder: *Builder, dir_path: []const u8, allow_existing: bool) CreateDirStep {
         return CreateDirStep{
             .builder = builder,
-            .step = Step.init(builder.fmt("CreateDir {}", dir_path), builder.allocator, make),
+            .step = Step.init(.custom, builder.fmt("CreateDir {s}", .{dir_path}), builder.allocator, make),
             .dir_path = dir_path,
             .allow_existing = allow_existing,
         };
@@ -86,12 +86,12 @@ const CreateDirStep = struct {
         const self = @fieldParentPtr(CreateDirStep, "step", step);
 
         const full_path = self.builder.pathFromRoot(self.dir_path);
-        std.fs.makeDir(full_path) catch |err| {
+        std.fs.makeDirAbsolute(full_path) catch |err| {
             if (self.allow_existing and err == error.PathAlreadyExists) {
                 return;
             }
 
-            std.debug.warn("Unable to create {}: {}\n", full_path, @errorName(err));
+            std.debug.warn("Unable to create {s}: {s}\n", .{ full_path, @errorName(err) });
             return err;
         };
     }
@@ -104,8 +104,6 @@ fn addCreateDirStep(self: *Builder, dir_path: []const u8, allow_existing: bool) 
 }
 
 pub fn build(b: *Builder) !void {
-    const allocator = std.heap.direct_allocator;
-
     const create_build_dir = addCreateDirStep(b, build_path, true);
     const create_build_c_dir = addCreateDirStep(b, build_path_c, true);
 
@@ -113,12 +111,12 @@ pub fn build(b: *Builder) !void {
         // Zig Target
         {
             const exe = b.addExecutable(target.name, "src/" ++ target.name ++ ".zig");
-            exe.setBuildMode(builtin.Mode.ReleaseFast);
+            exe.setBuildMode(.ReleaseFast);
             exe.step.dependOn(&create_build_dir.step);
             exe.setOutputDir(build_path);
 
             if (target.libs) |libs| {
-                var it = std.mem.separate(libs, " ");
+                var it = std.mem.split(u8, libs, " ");
                 while (it.next()) |lib| {
                     exe.linkSystemLibrary(lib);
                 }
@@ -131,21 +129,21 @@ pub fn build(b: *Builder) !void {
         {
             const exe = b.addExecutable(target.name, null);
 
-            var cflags = std.ArrayList([]const u8).init(allocator);
+            var cflags = std.ArrayList([]const u8).init(b.allocator);
             defer cflags.deinit();
 
-            var cflag_it = std.mem.separate(target.cflags, " ");
+            var cflag_it = std.mem.split(u8, target.cflags, " ");
             while (cflag_it.next()) |flag| {
                 try cflags.append(flag);
             }
 
-            exe.addCSourceFile("ref/" ++ target.name ++ ".c", cflags.toSliceConst());
+            exe.addCSourceFile("ref/" ++ target.name ++ ".c", cflags.items);
             exe.addIncludeDir("ref/include");
             exe.step.dependOn(&create_build_c_dir.step);
             exe.setOutputDir(build_path_c);
 
             if (target.libs) |libs| {
-                var it = std.mem.separate(libs, " ");
+                var it = std.mem.split(u8, libs, " ");
                 while (it.next()) |lib| {
                     exe.linkSystemLibrary(lib);
                 }

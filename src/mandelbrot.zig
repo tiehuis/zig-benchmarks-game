@@ -1,25 +1,24 @@
 const std = @import("std");
 
-var buffer: [32]u8 = undefined;
+var buffer: [256]u8 = undefined;
 var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    var buffered_stdout = std.io.BufferedOutStream(std.fs.File.OutStream.Error).init(&stdout_out_stream.stream);
-    defer _ = buffered_stdout.flush() catch {};
-    var stdout = &buffered_stdout.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var args = std.process.args();
-    _ = args.skip();
-    const w = try std.fmt.parseUnsigned(usize, try args.next(allocator).?, 10);
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const w = try std.fmt.parseUnsigned(usize, args[1], 10);
     const h = w;
 
     const iterations = 50;
     const limit = 2.0;
 
-    try stdout.print("P4\n{} {}\n", w, h);
+    try stdout.print("P4\n{} {}\n", .{ w, h });
 
     var ba: u8 = 0;
     var bn: u8 = 0;
@@ -50,12 +49,12 @@ pub fn main() !void {
 
             bn += 1;
             if (bn == 8) {
-                try stdout.print("{c}", ba);
+                try stdout.print("{c}", .{ba});
                 ba = 0;
                 bn = 0;
             } else if (x == w - 1) {
                 ba = std.math.shr(u8, ba, 8 - w % 8);
-                try stdout.print("{c}", ba);
+                try stdout.print("{c}", .{ba});
                 ba = 0;
                 bn = 0;
             }

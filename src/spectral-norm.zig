@@ -29,16 +29,18 @@ fn eval_ata_times_u(atau: []f64, u: []const f64, scratch: []f64) void {
     eval_a_times_u(true, atau, scratch);
 }
 
-const allocator = std.heap.direct_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var allocator = &gpa.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    const stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var args = std.process.args();
-    _ = args.skip();
-    const n = try std.fmt.parseUnsigned(u64, try args.next(allocator).?, 10);
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const n = try std.fmt.parseUnsigned(u64, args[1], 10);
 
     var u = try allocator.alloc(f64, n);
     var v = try allocator.alloc(f64, n);
@@ -63,5 +65,5 @@ pub fn main() !void {
         vv += v[i] * v[i];
     }
 
-    try stdout.print("{:.9}\n", std.math.sqrt(vbv / vv));
+    try stdout.print("{:9}\n", .{std.math.sqrt(vbv / vv)});
 }

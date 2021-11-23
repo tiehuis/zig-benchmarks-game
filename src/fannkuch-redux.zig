@@ -1,17 +1,18 @@
 const std = @import("std");
 
-var buffer: [1024]u8 = undefined;
+var buffer: [2048]u8 = undefined;
 var fixed_allocator = std.heap.FixedBufferAllocator.init(buffer[0..]);
 var allocator = &fixed_allocator.allocator;
 
 pub fn main() !void {
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    var stdout = &stdout_out_stream.stream;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var args = std.process.args();
-    _ = args.skip();
-    const n = try std.fmt.parseUnsigned(u8, try args.next(allocator).?, 10);
+    var args = try std.process.argsAlloc(allocator);
+    if (args.len < 2) return error.InvalidArguments;
+
+    const n = try std.fmt.parseUnsigned(usize, args[1], 10);
 
     var perm = try allocator.alloc(usize, n);
     var perm1 = try allocator.alloc(usize, n);
@@ -84,5 +85,5 @@ pub fn main() !void {
         }
     }
 
-    try stdout.print("{}\nPfannkuchen({}) = {}\n", checksum, n, max_flips_count);
+    try stdout.print("{}\nPfannkuchen({}) = {}\n", .{ checksum, n, max_flips_count });
 }

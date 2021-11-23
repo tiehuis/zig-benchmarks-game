@@ -5,13 +5,15 @@ const Regex = struct {
     re: *c.pcre,
     re_ex: *c.pcre_extra,
 
-    pub fn compile(pattern: [*]const u8) !Regex {
+    // Must be given a null-terminated pattern (zig string).
+    pub fn compile(pattern: []const u8) !Regex {
         var result: Regex = undefined;
 
         var re_eo: c_int = undefined;
         var re_e: [*c]const u8 = undefined;
+        var pattern_c = @ptrCast([*:0]const u8, pattern);
 
-        const re = c.pcre_compile(pattern, 0, &re_e, &re_eo, 0);
+        const re = c.pcre_compile(pattern_c, 0, &re_e, &re_eo, 0);
         if (re) |ok_re| {
             result.re = ok_re;
         } else {
@@ -23,9 +25,9 @@ const Regex = struct {
     }
 };
 
-fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, replacement: [*]const u8) !usize {
+fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: []const u8, replacement: []const u8) !usize {
     var regex = try Regex.compile(pattern);
-    dst.shrink(0);
+    dst.shrinkRetainingCapacity(0);
 
     var pos: c_int = 0;
     var m: [3]c_int = undefined;
@@ -33,16 +35,16 @@ fn substitute(dst: *std.ArrayList(u8), src: []const u8, pattern: [*]const u8, re
         const upos = @intCast(usize, pos);
         const clen = @intCast(usize, m[0]) - upos;
         try dst.appendSlice(src[upos .. upos + clen]);
-        try dst.appendSlice(std.mem.toSliceConst(u8, replacement));
+        try dst.appendSlice(replacement);
     }
 
     const upos = @intCast(usize, pos);
     const clen = src.len - upos;
     try dst.appendSlice(src[upos .. upos + clen]);
-    return dst.len;
+    return dst.items.len;
 }
 
-fn countMatches(src: []const u8, pattern: [*]const u8) !usize {
+fn countMatches(src: []const u8, pattern: []const u8) !usize {
     var regex = try Regex.compile(pattern);
 
     var count: usize = 0;
@@ -55,48 +57,49 @@ fn countMatches(src: []const u8, pattern: [*]const u8) !usize {
     return count;
 }
 
-const variants = [_][*]const u8{
-    c"agggtaaa|tttaccct",
-    c"[cgt]gggtaaa|tttaccc[acg]",
-    c"a[act]ggtaaa|tttacc[agt]t",
-    c"ag[act]gtaaa|tttac[agt]ct",
-    c"agg[act]taaa|ttta[agt]cct",
-    c"aggg[acg]aaa|ttt[cgt]ccct",
-    c"agggt[cgt]aa|tt[acg]accct",
-    c"agggta[cgt]a|t[acg]taccct",
-    c"agggtaa[cgt]|[acg]ttaccct",
+const variants = [_][]const u8{
+    "agggtaaa|tttaccct",
+    "[cgt]gggtaaa|tttaccc[acg]",
+    "a[act]ggtaaa|tttacc[agt]t",
+    "ag[act]gtaaa|tttac[agt]ct",
+    "agg[act]taaa|ttta[agt]cct",
+    "aggg[acg]aaa|ttt[cgt]ccct",
+    "agggt[cgt]aa|tt[acg]accct",
+    "agggta[cgt]a|t[acg]taccct",
+    "agggtaa[cgt]|[acg]ttaccct",
 };
 
-const subs = [_][*]const u8{
-    c"tHa[Nt]",            c"<4>",
-    c"aND|caN|Ha[DS]|WaS", c"<3>",
-    c"a[NSt]|BY",          c"<2>",
-    c"<[^>]*>",            c"|",
-    c"\\|[^|][^|]*\\|",    c"-",
+const subs = [_][]const u8{
+    "tHa[Nt]",            "<4>",
+    "aND|caN|Ha[DS]|WaS", "<3>",
+    "a[NSt]|BY",          "<2>",
+    "<[^>]*>",            "|",
+    "\\|[^|][^|]*\\|",    "-",
 };
+
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var allocator = &gpa.allocator;
 
 pub fn main() !void {
-    var allocator = std.heap.c_allocator;
+    var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
+    defer buffered_stdout.flush() catch unreachable;
+    const stdout = buffered_stdout.writer();
 
-    var stdout_file = try std.io.getStdOut();
-    var stdout_out_stream = stdout_file.outStream();
-    const stdout = &stdout_out_stream.stream;
-
-    var stdin_file = try std.io.getStdIn();
-    var stdin = stdin_file.inStream();
+    var buffered_stdin = std.io.bufferedReader(std.io.getStdIn().reader());
+    const stdin = buffered_stdin.reader();
 
     var seq: [2]std.ArrayList(u8) = undefined;
     seq[1] = std.ArrayList(u8).init(allocator);
     defer seq[1].deinit();
 
-    const input = try stdin.stream.readAllAlloc(allocator, std.math.maxInt(usize));
+    const input = try stdin.readAllAlloc(allocator, std.math.maxInt(usize));
     const ilen = input.len;
     seq[0] = std.ArrayList(u8).fromOwnedSlice(allocator, input);
     defer seq[0].deinit();
 
-    const clen = try substitute(&seq[1], seq[0].toSliceConst(), c">.*|\n", c"");
+    const clen = try substitute(&seq[1], seq[0].items, ">.*|\n", "");
     for (variants) |variant| {
-        try stdout.print("{s} {}\n", variant, countMatches(seq[1].toSliceConst(), variant));
+        _ = try stdout.print("{s} {}\n", .{ variant, countMatches(seq[1].items, variant) });
     }
 
     var slen: usize = 0;
@@ -104,9 +107,9 @@ pub fn main() !void {
     var i: usize = 0;
     var flip: usize = 1;
     while (i < subs.len) : (i += 2) {
-        slen = try substitute(&seq[1 - flip], seq[flip].toSliceConst(), subs[i], subs[i + 1]);
+        slen = try substitute(&seq[1 - flip], seq[flip].items, subs[i], subs[i + 1]);
         flip = 1 - flip;
     }
 
-    try stdout.print("\n{}\n{}\n{}\n", ilen, clen, slen);
+    _ = try stdout.print("\n{}\n{}\n{}\n", .{ ilen, clen, slen });
 }
