@@ -150,8 +150,8 @@ pub fn main() !void {
     var bodies = solar_bodies;
 
     offset_momentum(bodies[0..]);
-    _ = try stdout.print("{:.9}\n", .{energy(bodies[0..])});
+    _ = try stdout.print("{d:.9}\n", .{energy(bodies[0..])});
 
     advance(bodies[0..], 0.01, n);
-    _ = try stdout.print("{:.9}\n", .{energy(bodies[0..])});
+    _ = try stdout.print("{d:.9}\n", .{energy(bodies[0..])});
 }

@@ -65,5 +65,5 @@ pub fn main() !void {
         vv += v[i] * v[i];
     }
 
-    try stdout.print("{:9}\n", .{std.math.sqrt(vbv / vv)});
+    try stdout.print("{d:.9}\n", .{@sqrt(vbv / vv)});
 }

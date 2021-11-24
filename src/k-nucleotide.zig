@@ -61,7 +61,7 @@ fn generateFrequenciesForLength(allocator: *std.mem.Allocator, poly: []const u8,
 
         const slice = try std.fmt.bufPrint(
             output[position..],
-            "{s} {:.3}\n",
+            "{s} {d:.3}\n",
             .{ olig[0..], 100.0 * @intToFloat(f64, entry.value) / @intToFloat(f64, poly.len - desired_length + 1) },
         );
         position += slice.len;
@@ -104,8 +104,7 @@ fn generateCount(allocator: *std.mem.Allocator, poly: []const u8, comptime olig:
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    var allocator = &gpa.allocator;
+    var allocator = std.heap.c_allocator;
 
     var buffered_stdout = std.io.bufferedWriter(std.io.getStdOut().writer());
     defer buffered_stdout.flush() catch unreachable;
@@ -147,6 +146,7 @@ pub fn main() !void {
     }
 
     for (output) |entry| {
-        _ = try stdout.print("{s}\n", .{entry[0..]});
+        const entry_len = std.mem.indexOfScalarPos(u8, entry[0..], 0, 0) orelse unreachable;
+        _ = try stdout.print("{s}\n", .{entry[0..entry_len]});
     }
 }
