@@ -60,7 +60,7 @@ const targets = [_]Target{
     },
     Target{
         .name = "regex-redux",
-        .libs = "c pcre",
+        .libs = "c pcre omp",
         .cflags = default_cflags ++ " -fopenmp",
     },
 };

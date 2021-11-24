@@ -1,128 +1,207 @@
-/* The Computer Language Benchmarks Game
- * http://benchmarksgame.alioth.debian.org/
-**
-** regex-dna program contributed by Mike Pall
-** converted from regex-dna program by Jeremy Zerfas
-**
-*/
+// The Computer Language Benchmarks Game
+// https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
+//
+// Contributed by Jeremy Zerfas
 
-#define __USE_STRING_INLINES
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <pcre.h>
 
+typedef struct {
+    char * data;
+    int capacity, size;
+} string;
 
-typedef struct fbuf {
-  char *buf;
-  size_t size, len;
-} fbuf_t;
 
-static void fb_init(fbuf_t *b)
-{
-  b->buf = NULL;
-  b->len = b->size = 0;
+// Function for searching a src_String for a pattern, replacing it with some
+// specified replacement, and storing the result in dst_String.
+static void replace(char const * const pattern, char const * const replacement
+  , string const * const src_String, string * const dst_String
+  , pcre_jit_stack * const stack){
+
+    char const * error;
+    int offset, pos=0, match[3];
+    int const replacement_Size=strlen(replacement);
+
+    // Compile and study pattern.
+    pcre * regex=pcre_compile(pattern, 0, &error, &offset, NULL);
+    pcre_extra * aid=pcre_study(regex, PCRE_STUDY_JIT_COMPILE, &error);
+
+    // Find each match of the pattern in src_String and append the characters
+    // preceding each match and the replacement text to dst_String.
+    while(pcre_jit_exec(regex, aid, src_String->data, src_String->size
+      , pos, 0, match, 3, stack)>=0){
+
+        // Allocate more memory for dst_String if there is not enough space for
+        // the characters preceding the match and the replacement text.
+        while(dst_String->size+match[0]-pos+replacement_Size
+          >dst_String->capacity)
+            dst_String->data=realloc(dst_String->data, dst_String->capacity*=2);
+
+        // Append the characters preceding the match and the replacement text to
+        // dst_String and update the size of dst_String.
+        memcpy(dst_String->data+dst_String->size, src_String->data+pos
+          , match[0]-pos);
+        memcpy(dst_String->data+dst_String->size+match[0]-pos, replacement
+          , replacement_Size);
+        dst_String->size+=match[0]-pos+replacement_Size;
+
+        // Update pos to continue searching after the current match.
+        pos=match[1];
+    }
+
+    pcre_free_study(aid);
+    pcre_free(regex);
+
+    // Allocate more memory for dst_String if there is not enough space for
+    // the characters following the last match (or the entire src_String if
+    // there was no match).
+    while(dst_String->size+src_String->size-pos>dst_String->capacity)
+        dst_String->data=realloc(dst_String->data, dst_String->capacity*=2);
+
+    // Append the characters following the last match (or the entire src_String
+    // if there was no match) to dst_String and update the size of dst_String.
+    memcpy(dst_String->data+dst_String->size, src_String->data+pos
+      , src_String->size-pos);
+    dst_String->size+=src_String->size-pos;
 }
 
-static char *fb_need(fbuf_t *b, size_t need)
-{
-  need += b->len;
-  if (need > b->size) {
-    if (b->size == 0) b->size = need;
-    else while (need > b->size) b->size += b->size;
-    if (!(b->buf = realloc(b->buf, b->size))) exit(1);
-  }
-  return b->buf+b->len;
-}
 
-#define FB_MINREAD	(3<<16)
+int main(void){
+    char const * const count_Info[]={
+        "agggtaaa|tttaccct",
+        "[cgt]gggtaaa|tttaccc[acg]",
+        "a[act]ggtaaa|tttacc[agt]t",
+        "ag[act]gtaaa|tttac[agt]ct",
+        "agg[act]taaa|ttta[agt]cct",
+        "aggg[acg]aaa|ttt[cgt]ccct",
+        "agggt[cgt]aa|tt[acg]accct",
+        "agggta[cgt]a|t[acg]taccct",
+        "agggtaa[cgt]|[acg]ttaccct"
+      }, * const replace_Info[][2]={
+        {"tHa[Nt]", "<4>"},
+        {"aND|caN|Ha[DS]|WaS", "<3>"},
+        {"a[NSt]|BY", "<2>"},
+        {"<[^>]*>", "|"},
+        {"\\|[^|][^|]*\\|", "-"}
+      };
 
-/* Read all of a stdio stream into dst buffer. */
-static size_t fb_readall(fbuf_t *dst, FILE *fp)
-{
-  char *dp;
-  int n;
-  for (dp = fb_need(dst, FB_MINREAD);
-       (n = fread(dp, 1, dst->size-dst->len, fp)) > 0;
-       dp = fb_need(dst, FB_MINREAD)) dst->len += n;
-  if (ferror(fp)) exit(1);
-  return dst->len;
-}
+    string input={malloc(16384), 16384}, sequences={malloc(16384), 16384};
+    int postreplace_Size;
 
-/* Substitute pattern p with replacement r, copying from src to dst buffer. */
-static size_t fb_subst(fbuf_t *dst, fbuf_t *src, const char *p, const char *r)
-{
-  pcre *re;
-  pcre_extra *re_ex;
-  const char *re_e;
-  char *dp;
-  int re_eo, m[3], pos, rlen, clen;
-  if (!(re = pcre_compile(p, 0, &re_e, &re_eo, NULL))) exit(1);
-  re_ex = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &re_e);
-  for (dst->len = 0, rlen = strlen(r), pos = 0;
-       pcre_exec(re, re_ex, src->buf, src->len, pos, 0, m, 3) >= 0;
-       pos = m[1]) {
-    clen = m[0]-pos;
-    dp = fb_need(dst, clen+rlen);
-    dst->len += clen+rlen;
-    memcpy(dp, src->buf+pos, clen);
-    memcpy(dp+clen, r, rlen);
-  }
-  clen = src->len-pos;
-  dp = fb_need(dst, clen);
-  dst->len += clen;
-  memcpy(dp, src->buf+pos, clen);
-  return dst->len;
-}
 
-/* Count all matches with pattern p in src buffer. */
-static int fb_countmatches(fbuf_t *src, const char *p)
-{
-  pcre *re;
-  pcre_extra *re_ex;
-  const char *re_e;
-  int re_eo, m[3], pos, count;
-  if (!(re = pcre_compile(p, 0, &re_e, &re_eo, NULL))) exit(1);
-  re_ex = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &re_e);
-  for (count = 0, pos = 0;
-       pcre_exec(re, re_ex, src->buf, src->len, pos, 0, m, 3) >= 0;
-       pos = m[1]) count++;
-  return count;
-}
+    // Read in input from stdin until we reach the end or encounter an error.
+    for(int bytes_Read;
+      (bytes_Read=fread(input.data+input.size, 1, input.capacity-input.size
+      , stdin))>0;)
+        // Update the size of input to reflect the newly read input and if
+        // we've reached the full capacity of the input string then also double
+        // its size.
+        if((input.size+=bytes_Read)==input.capacity)
+            input.data=realloc(input.data, input.capacity*=2);
 
-static const char *variants[] = {
-  "agggtaaa|tttaccct",         "[cgt]gggtaaa|tttaccc[acg]",
-  "a[act]ggtaaa|tttacc[agt]t", "ag[act]gtaaa|tttac[agt]ct",
-  "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct",
-  "agggt[cgt]aa|tt[acg]accct", "agggta[cgt]a|t[acg]taccct",
-  "agggtaa[cgt]|[acg]ttaccct", NULL
-};
 
-static const char *subst[] = {
-  "tHa[Nt]", "<4>",
-  "aND|caN|Ha[DS]|WaS", "<3>",
-  "a[NSt]|BY", "<2>",
-  "<[^>]*>", "|",
-  "\\|[^|][^|]*\\|", "-",
-  NULL
-};
+    #pragma omp parallel
+    {
+        pcre_jit_stack * const stack=pcre_jit_stack_alloc(16384, 16384);
 
-int main(int argc, char **argv)
-{
-  fbuf_t seq[2];
-  const char **pp;
-  size_t ilen, clen, slen;
-  int flip;
-  fb_init(&seq[0]);
-  fb_init(&seq[1]);
-  ilen = fb_readall(&seq[0], stdin);
-  clen = fb_subst(&seq[1], &seq[0], ">.*|\n", "");
-  for (pp = variants; *pp; pp++)
-    printf("%s %d\n", *pp, fb_countmatches(&seq[1], *pp));
 
-  for (slen = 0, flip = 1, pp = subst; *pp; pp += 2, flip = 1-flip)
-    slen = fb_subst(&seq[1-flip], &seq[flip], *pp, pp[1]);
+        // Find all sequence descriptions and new lines in input, replace them
+        // with empty strings, and store the result in the sequences string.
+        #pragma omp single
+        {
+            replace(">.*\\n|\\n", "", &input, &sequences, stack);
 
-  printf("\n%zu\n%zu\n%zu\n", ilen, clen, slen);
-  return 0;
+            free(input.data);
+        }
+
+
+        // Have one thread start working on performing all the replacements
+        // serially.
+        #pragma omp single nowait
+        {
+            // We'll use two strings when doing all the replacements, searching
+            // for patterns in prereplace_String and using postreplace_String to
+            // store the string after the replacements have been made. After
+            // each iteration these two then get swapped. Start out with both
+            // strings having the same capacity as the sequences string and also
+            // copy the sequences string into prereplace_String for the initial
+            // iteration.
+            string prereplace_String={
+                malloc(sequences.capacity), sequences.capacity, sequences.size
+              }, postreplace_String={
+                malloc(sequences.capacity), sequences.capacity
+              };
+            memcpy(prereplace_String.data, sequences.data, sequences.size);
+
+            // Iterate through all the replacement patterns and their
+            // replacements in replace_Info[].
+            for(int i=0; i<sizeof(replace_Info)/sizeof(char * [2]); i++){
+
+                replace(replace_Info[i][0], replace_Info[i][1]
+                  , &prereplace_String, &postreplace_String, stack);
+
+                // Swap prereplace_String and postreplace_String in preparation
+                // for the next iteration.
+                string const temp=prereplace_String;
+                prereplace_String=postreplace_String;
+                postreplace_String=temp;
+
+                postreplace_String.size=0;
+            }
+
+            // If any replacements were made, they'll be in prereplace_String
+            // instead of postreplace_String because of the swap done after each
+            // iteration. Copy its size to postreplace_Size.
+            postreplace_Size=prereplace_String.size;
+
+            free(prereplace_String.data);
+            free(postreplace_String.data);
+        }
+
+
+        // Iterate through all the count patterns in count_Info[] and perform
+        // the counting for each one on a different thread if available.
+        #pragma omp for schedule(dynamic) ordered
+        for(int i=0; i<sizeof(count_Info)/sizeof(char *); i++){
+
+            char const * error;
+            int offset, pos=0, match[3], count=0;
+
+            // Compile and study pattern.
+            pcre * regex=pcre_compile(count_Info[i], 0, &error, &offset, NULL);
+            pcre_extra * aid=pcre_study(regex, PCRE_STUDY_JIT_COMPILE, &error);
+
+            // Find each match of the pattern in the sequences string and
+            // increment count for each match.
+            while(pcre_jit_exec(regex, aid, sequences.data, sequences.size
+              , pos, 0, match, 3, stack)>=0){
+
+                count++;
+
+                // Update pos to continue searching after the current match.
+                pos=match[1];
+            }
+
+            pcre_free_study(aid);
+            pcre_free(regex);
+
+            // Print the count for each pattern in the correct order.
+            #pragma omp ordered
+            printf("%s %d\n", count_Info[i], count);
+        }
+
+
+        pcre_jit_stack_free(stack);
+    }
+
+
+    free(sequences.data);
+
+    // Print the size of the original input, the size of the input without the
+    // sequence descriptions & new lines, and the size after having made all the
+    // replacements.
+    printf("\n%d\n%d\n%d\n", input.size, sequences.size, postreplace_Size);
+    return 0;
 }
